@@ -5,6 +5,7 @@
     <string name="nav_terminal">Terminal</string>
     <string name="nav_power">Power</string>
     <string name="nav_modules">Modules</string>
+    <string name="nav_network">Network</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>

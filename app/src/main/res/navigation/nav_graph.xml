@@ -5,40 +5,33 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/dashboardFragment">
 
-    <fragment
-        android:id="@+id/dashboardFragment"
+    <fragment android:id="@+id/dashboardFragment"
         android:name="com.godmode.app.ui.dashboard.DashboardFragment"
-        android:label="Dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:label="Dashboard" tools:layout="@layout/fragment_dashboard"/>
 
-    <fragment
-        android:id="@+id/appsFragment"
+    <fragment android:id="@+id/appsFragment"
         android:name="com.godmode.app.ui.apps.AppsFragment"
-        android:label="Apps"
-        tools:layout="@layout/fragment_apps" />
+        android:label="Apps" tools:layout="@layout/fragment_apps"/>
 
-    <fragment
-        android:id="@+id/modulesFragment"
+    <fragment android:id="@+id/modulesFragment"
         android:name="com.godmode.app.ui.modules.ModulesFragment"
-        android:label="Modules"
-        tools:layout="@layout/fragment_modules" />
+        android:label="Modules" tools:layout="@layout/fragment_modules"/>
 
-    <fragment
-        android:id="@+id/terminalFragment"
-        android:name="com.godmode.app.ui.terminal.TerminalFragment"
-        android:label="Terminal"
-        tools:layout="@layout/fragment_terminal" />
+    <fragment android:id="@+id/networkFragment"
+        android:name="com.godmode.app.ui.network.NetworkFragment"
+        android:label="Network" tools:layout="@layout/fragment_network"/>
 
-    <fragment
-        android:id="@+id/logsFragment"
-        android:name="com.godmode.app.ui.logs.LogsFragment"
-        android:label="Logs"
-        tools:layout="@layout/fragment_logs" />
-
-    <fragment
-        android:id="@+id/settingsFragment"
+    <fragment android:id="@+id/settingsFragment"
         android:name="com.godmode.app.ui.settings.SettingsFragment"
-        android:label="Settings"
-        tools:layout="@layout/fragment_settings" />
+        android:label="Settings" tools:layout="@layout/fragment_settings"/>
+
+    <!-- Accessible via navigation, not bottom nav -->
+    <fragment android:id="@+id/terminalFragment"
+        android:name="com.godmode.app.ui.terminal.TerminalFragment"
+        android:label="Terminal" tools:layout="@layout/fragment_terminal"/>
+
+    <fragment android:id="@+id/logsFragment"
+        android:name="com.godmode.app.ui.logs.LogsFragment"
+        android:label="Logs" tools:layout="@layout/fragment_logs"/>
 
 </navigation>

@@ -166,13 +166,9 @@ class AppDetailActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        binding.btnSave.setOnClickListener {
-            saveConfig()
-        }
+        binding.btnSave.setOnClickListener { saveConfig() }
 
-        binding.btnRandomizeAll.setOnClickListener {
-            randomizeAll()
-        }
+        binding.btnRandomizeAll.setOnClickListener { randomizeAll() }
 
         binding.btnViewLogs.setOnClickListener {
             val intent = Intent(this, LogDetailActivity::class.java).apply {
@@ -196,14 +192,135 @@ class AppDetailActivity : AppCompatActivity() {
                 finish()
             }
         }
+
+        // App management buttons
+        binding.btnForceStop.setOnClickListener {
+            lifecycleScope.launch {
+                val rm = (application as GodModeApp).rootManager
+                val ok = rm.forceStopApp(packageName)
+                Toast.makeText(this@AppDetailActivity, if (ok) "App force stopped" else "Failed - grant root", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnClearCache.setOnClickListener {
+            lifecycleScope.launch {
+                val rm = (application as GodModeApp).rootManager
+                rm.clearAppCache(packageName)
+                Toast.makeText(this@AppDetailActivity, "Cache cleared", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnClearData.setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Clear App Data")
+                .setMessage("Reset ${appName} completely? All data will be lost.")
+                .setPositiveButton("Clear") { _, _ ->
+                    lifecycleScope.launch {
+                        val rm = (application as GodModeApp).rootManager
+                        val ok = rm.clearAppData(packageName)
+                        Toast.makeText(this@AppDetailActivity, if (ok) "Data cleared" else "Failed", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null).show()
+        }
+
+        binding.btnOpenApp.setOnClickListener {
+            try {
+                val intent = packageManager.getLaunchIntentForPackage(packageName)
+                if (intent != null) startActivity(intent)
+                else Toast.makeText(this, "Cannot launch this app", Toast.LENGTH_SHORT).show()
+            } catch (e: Throwable) {
+                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.btnViewPermissions.setOnClickListener {
+            lifecycleScope.launch {
+                val rm = (application as GodModeApp).rootManager
+                val perms = rm.getAppPermissions(packageName)
+                val ops = rm.getAppOps(packageName)
+                showInfoDialog("Permissions & App Ops", "GRANTED PERMISSIONS:\n$perms\n\nAPP OPERATIONS LOG:\n$ops")
+            }
+        }
+    }
+
+    private fun showInfoDialog(title: String, content: String) {
+        val scrollView = android.widget.ScrollView(this)
+        val tv = android.widget.TextView(this).apply {
+            text = content.ifEmpty { "No data available" }
+            textSize = 11f
+            setPadding(32, 16, 32, 16)
+            typeface = android.graphics.Typeface.MONOSPACE
+        }
+        scrollView.addView(tv)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(scrollView)
+            .setPositiveButton("Close", null)
+            .show()
     }
 
     private fun saveConfig() {
         val config = collectConfigFromUI()
         lifecycleScope.launch {
             repository.saveConfig(config)
+            // Write to XSharedPreferences for Xposed module
+            saveXposedPrefs(config)
             currentConfig = config
-            Toast.makeText(this@AppDetailActivity, "Configuration saved", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@AppDetailActivity, "Configuration saved - active hooks applied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Write config to SharedPreferences that the Xposed module reads via XSharedPreferences */
+    private fun saveXposedPrefs(config: AppConfig) {
+        val prefs = getSharedPreferences("xposed_${config.packageName}", MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean("active", config.isActive)
+            putInt("imei_mode", config.imeiMode)
+            putString("imei_value", config.customImei)
+            putInt("android_id_mode", config.androidIdMode)
+            putString("android_id_value", config.customAndroidId)
+            putInt("serial_mode", config.serialMode)
+            putString("serial_value", config.customSerial)
+            putInt("mac_mode", config.macMode)
+            putString("mac_value", config.customMac)
+            putInt("build_mode", config.buildMode)
+            putString("build_model", config.customModel)
+            putString("build_brand", config.customBrand)
+            putInt("location_mode", config.locationMode)
+            putFloat("location_lat", config.customLat.toFloat())
+            putFloat("location_lon", config.customLon.toFloat())
+            putBoolean("block_camera", config.blockCamera)
+            putBoolean("block_mic", config.blockMicrophone)
+            putInt("ad_id_mode", config.adIdMode)
+            putString("ad_id_value", config.customAdId)
+        }.apply()
+
+        // Make prefs world-readable for XSharedPreferences (LSPosed will also handle this)
+        lifecycleScope.launch {
+            try {
+                val rootManager = (application as GodModeApp).rootManager
+                rootManager.execRootCommand(
+                    "chmod 644 /data/data/com.godmode.app/shared_prefs/xposed_${config.packageName}.xml 2>/dev/null"
+                )
+            } catch (_: Throwable) {}
+        }
+
+        // Apply permission changes immediately via pm
+        if (config.isActive) {
+            lifecycleScope.launch {
+                val rootManager = (application as GodModeApp).rootManager
+                if (config.blockCamera) {
+                    rootManager.revokePermission(packageName, "android.permission.CAMERA")
+                } else {
+                    rootManager.grantPermission(packageName, "android.permission.CAMERA")
+                }
+                if (config.blockMicrophone) {
+                    rootManager.revokePermission(packageName, "android.permission.RECORD_AUDIO")
+                } else {
+                    rootManager.grantPermission(packageName, "android.permission.RECORD_AUDIO")
+                }
+            }
         }
     }
 

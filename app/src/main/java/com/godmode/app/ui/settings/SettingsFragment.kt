@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.godmode.app.GodModeApp
 import com.godmode.app.data.db.GodModeDatabase
 import com.godmode.app.data.repository.GodModeRepository
@@ -134,6 +135,10 @@ class SettingsFragment : Fragment() {
         // ---- System Tools ----
         binding.btnRunShellCmd.setOnClickListener {
             showShellCommandDialog()
+        }
+
+        binding.btnOpenTerminal.setOnClickListener {
+            findNavController().navigate(com.godmode.app.R.id.terminalFragment)
         }
 
         binding.btnRemountSystem.setOnClickListener {

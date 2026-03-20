@@ -82,6 +82,11 @@
         android:hardwareAccelerated="true"
         tools:targetApi="31">
 
+        <!-- Xposed Module metadata -->
+        <meta-data android:name="xposedmodule" android:value="true" />
+        <meta-data android:name="xposeddescription" android:value="GoMode Privacy Protection - Spoof hardware IDs for any app" />
+        <meta-data android:name="xposedminversion" android:value="82" />
+
         <!-- Main Activity -->
         <activity
             android:name=".ui.MainActivity"

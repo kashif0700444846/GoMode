@@ -132,10 +132,38 @@ class DashboardFragment : Fragment() {
 
         binding.btnToggleDaemon.text = if (status.isDaemonRunning) "Stop Daemon" else "Start Daemon"
 
-        // Tool detection
-        binding.tvMagiskStatus.text = if (status.hasMagisk) "Detected" else "Not Found"
-        binding.tvKernelsuStatus.text = if (status.hasKernelSU) "Detected" else "Not Found"
-        binding.tvLsposedStatus.text = if (status.hasLSPosed) "Detected" else "Not Found"
+        // Tool detection - show actual versions
+        val rm = (requireActivity().application as GodModeApp).rootManager
+        viewLifecycleOwner.lifecycleScope.launch {
+            val magiskVer = if (status.hasMagisk) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { rm.getMagiskVersion() }
+            } else ""
+            val ksuVer = if (status.hasKernelSU) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { rm.getKSUVersion() }
+            } else ""
+            val lsposedVer = if (status.hasLSPosed) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { rm.getLSPosedVersion() }
+            } else ""
+
+            binding.tvMagiskStatus.text = if (status.hasMagisk) magiskVer.ifEmpty { "Detected" } else "Not Found"
+            binding.tvKernelsuStatus.text = if (status.hasKernelSU) ksuVer.ifEmpty { "Detected" } else "Not Found"
+            binding.tvLsposedStatus.text = if (status.hasLSPosed) lsposedVer.ifEmpty { "Detected" } else "Not Found"
+
+            // Color code based on detection
+            val found = resources.getColor(R.color.green_success, null)
+            val notFound = resources.getColor(R.color.text_hint, null)
+            binding.tvMagiskStatus.setTextColor(if (status.hasMagisk) found else notFound)
+            binding.tvKernelsuStatus.setTextColor(if (status.hasKernelSU) found else notFound)
+            binding.tvLsposedStatus.setTextColor(if (status.hasLSPosed) found else notFound)
+
+            // Show Xposed module activation banner if LSPosed is installed but module not yet activated
+            if (status.hasLSPosed) {
+                binding.tvXposedHint.visibility = View.VISIBLE
+                binding.tvXposedHint.text = "GoMode Xposed module available. Enable it in LSPosed Manager for 100% spoofing."
+            } else {
+                binding.tvXposedHint.visibility = View.GONE
+            }
+        }
 
         // Daemon version
         if (status.daemonVersion.isNotEmpty()) {

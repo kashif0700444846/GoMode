@@ -338,6 +338,19 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- LSPosed / Xposed hint banner -->
+        <TextView
+            android:id="@+id/tv_xposed_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:background="@color/bg_card_elevated"
+            android:padding="10dp"
+            android:text="Enable GoMode in LSPosed for 100% spoofing"
+            android:textColor="@color/accent"
+            android:textSize="11sp"
+            android:visibility="gone" />
+
         <!-- Device Info Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

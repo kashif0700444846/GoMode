@@ -74,6 +74,7 @@
                     android:letterSpacing="0.1"
                     android:layout_marginBottom="10dp" />
                 <Button android:id="@+id/btn_run_shell_cmd" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Run Custom Shell Command" android:layout_marginBottom="8dp" style="@style/GodMode.Button.Outlined" />
+                <Button android:id="@+id/btn_open_terminal" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Open Root Terminal" android:layout_marginBottom="8dp" style="@style/GodMode.Button" />
                 <Button android:id="@+id/btn_remount_system" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Remount /system as R/W" android:layout_marginBottom="8dp" style="@style/GodMode.Button.Outlined" />
                 <Button android:id="@+id/btn_reset_setup" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Run Setup Wizard Again" style="@style/GodMode.Button.Outlined" />
             </LinearLayout>

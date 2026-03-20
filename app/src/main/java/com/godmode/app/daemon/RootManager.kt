@@ -123,24 +123,30 @@ class RootManager private constructor(private val context: Context) {
 
     /**
      * Check root status and detect installed root tools.
+     * Uses execRootCommand for reliable detection (File.exists fails on /data/adb without root).
      */
     suspend fun getRootStatus(): RootStatus = withContext(Dispatchers.IO) {
         try {
-            val isRooted = if (nativeLibLoaded) {
-                try { nativeIsRooted() } catch (e: Throwable) { checkRootedKotlin() }
-            } else checkRootedKotlin()
+            // Request root first so subsequent checks work
+            val isRooted = try {
+                val id = execRootCommand("id").trim()
+                id.contains("uid=0")
+            } catch (e: Throwable) { checkRootedKotlin() }
 
-            val hasMagisk = if (nativeLibLoaded) {
-                try { nativeIsMagiskInstalled() } catch (e: Throwable) { checkMagiskKotlin() }
-            } else checkMagiskKotlin()
+            val hasMagisk = try {
+                val r = execRootCommand("magisk --version 2>/dev/null || ls /data/adb/magisk 2>/dev/null || ls /data/adb/magisk.db 2>/dev/null").trim()
+                r.isNotEmpty() && !r.startsWith("Error")
+            } catch (e: Throwable) { false }
 
-            val hasKernelSU = if (nativeLibLoaded) {
-                try { nativeIsKernelSUInstalled() } catch (e: Throwable) { checkKernelSUKotlin() }
-            } else checkKernelSUKotlin()
+            val hasKernelSU = try {
+                val r = execRootCommand("ksud --version 2>/dev/null || cat /proc/sys/kernel/ksud_version 2>/dev/null || ls /data/adb/ksu 2>/dev/null").trim()
+                r.isNotEmpty() && !r.startsWith("Error") && !r.contains("No such file")
+            } catch (e: Throwable) { false }
 
-            val hasLSPosed = if (nativeLibLoaded) {
-                try { nativeIsLSPosedInstalled() } catch (e: Throwable) { checkLSPosedKotlin() }
-            } else checkLSPosedKotlin()
+            val hasLSPosed = try {
+                val r = execRootCommand("ls /data/misc/lspd 2>/dev/null || ls /data/adb/modules/zygisk_lsposed 2>/dev/null || ls /data/adb/modules/lsposed 2>/dev/null").trim()
+                r.isNotEmpty() && !r.startsWith("Error") && !r.contains("No such file")
+            } catch (e: Throwable) { false }
 
             val isDaemonRunning = if (nativeLibLoaded) {
                 try { nativeIsDaemonRunning() } catch (e: Throwable) { false }
@@ -162,24 +168,11 @@ class RootManager private constructor(private val context: Context) {
     }
 
     private fun checkRootedKotlin(): Boolean {
-        val suPaths = listOf(
-            "/sbin/su", "/system/bin/su", "/system/xbin/su",
-            "/data/local/xbin/su", "/data/local/bin/su",
-            "/data/local/su", "/su/bin/su", "/magisk/.core/bin/su",
-            "/data/adb/magisk", "/sbin/.magisk", "/data/adb/ksu"
-        )
+        val suPaths = listOf("/sbin/su", "/system/bin/su", "/system/xbin/su",
+            "/data/local/xbin/su", "/data/local/bin/su", "/su/bin/su",
+            "/magisk/.core/bin/su", "/data/adb/magisk", "/data/adb/ksu")
         return suPaths.any { File(it).exists() }
     }
-
-    private fun checkMagiskKotlin() = File("/data/adb/magisk").exists() ||
-            File("/sbin/.magisk").exists() || File("/data/adb/magisk.db").exists()
-
-    private fun checkKernelSUKotlin() = File("/data/adb/ksu").exists() ||
-            File("/data/adb/ksud").exists()
-
-    private fun checkLSPosedKotlin() = File("/data/adb/modules/lsposed").exists() ||
-            File("/data/adb/modules/zygisk_lsposed").exists() ||
-            File("/data/misc/lspd").exists()
 
     /**
      * Request root permission by running a test su command.
@@ -319,19 +312,27 @@ class RootManager private constructor(private val context: Context) {
     }
 
     /**
-     * Get the real device IMEI (before spoofing).
+     * Get the real device IMEI using multiple fallback methods.
      */
     suspend fun getRealImei(): String = withContext(Dispatchers.IO) {
         try {
-            var result = execRootCommand(
-                "dumpsys iphonesubinfo 2>/dev/null | grep -i Device | tail -1 | cut -d= -f2 | tr -d . | tr -d \" \""
+            // Method 1: service call iphonesubinfo (most reliable on rooted devices)
+            val serviceResult = execRootCommand(
+                "service call iphonesubinfo 1 2>/dev/null | grep -oP \"'[0-9.]+'\" | tr -d \"'.\" | tr -d '\\n'"
             ).trim()
-            if (result.matches(Regex("[0-9]{14,15}"))) return@withContext result
+            if (serviceResult.matches(Regex("[0-9]{14,15}"))) return@withContext serviceResult
 
-            for (prop in listOf("ril.imei1", "ril.imei", "gsm.imei", "persist.radio.device.imei")) {
-                result = execRootCommand("getprop $prop 2>/dev/null").trim()
+            // Method 2: telephony properties
+            for (prop in listOf("ril.imei1", "ril.imei", "gsm.imei", "ro.ril.imei", "persist.radio.device.imei")) {
+                val result = execRootCommand("getprop $prop 2>/dev/null").trim()
                 if (result.matches(Regex("[0-9]{14,15}"))) return@withContext result
             }
+
+            // Method 3: dumpsys iphonesubinfo
+            val dumpsys = execRootCommand("dumpsys iphonesubinfo 2>/dev/null | grep -i IMEI | head -2")
+            val imeiMatch = Regex("[0-9]{14,15}").find(dumpsys)
+            if (imeiMatch != null) return@withContext imeiMatch.value
+
             ""
         } catch (e: Throwable) { "" }
     }
@@ -577,6 +578,200 @@ class RootManager private constructor(private val context: Context) {
         } catch (e: Throwable) {
             Log.e(TAG, "Failed to set up boot persistence", e)
         }
+    }
+
+    // ===== App Management =====
+
+    /** Force stop an app */
+    suspend fun forceStopApp(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        try { execRootCommand("am force-stop $packageName 2>/dev/null && echo OK").contains("OK") }
+        catch (e: Throwable) { false }
+    }
+
+    /** Clear app cache only */
+    suspend fun clearAppCache(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            execRootCommand("rm -rf /data/data/$packageName/cache/* 2>/dev/null; " +
+                    "rm -rf /data/data/$packageName/code_cache/* 2>/dev/null; " +
+                    "rm -rf /sdcard/Android/data/$packageName/cache/* 2>/dev/null; echo DONE")
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    /** Clear app data (full reset) */
+    suspend fun clearAppData(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        try { execRootCommand("pm clear $packageName 2>/dev/null").contains("Success") }
+        catch (e: Throwable) { false }
+    }
+
+    /** Grant a permission to an app */
+    suspend fun grantPermission(packageName: String, permission: String): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("pm grant $packageName $permission 2>&1").trim() }
+        catch (e: Throwable) { "Error: ${e.message}" }
+    }
+
+    /** Revoke a permission from an app */
+    suspend fun revokePermission(packageName: String, permission: String): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("pm revoke $packageName $permission 2>&1").trim() }
+        catch (e: Throwable) { "Error: ${e.message}" }
+    }
+
+    /** Get all permissions for an app and their states */
+    suspend fun getAppPermissions(packageName: String): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("pm dump $packageName 2>/dev/null | grep -A1 'granted=true\\|granted=false' | grep 'android.permission' | head -50").trim() }
+        catch (e: Throwable) { "" }
+    }
+
+    /** Get appops for an app (tracks what permissions were accessed) */
+    suspend fun getAppOps(packageName: String): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("appops get $packageName 2>/dev/null").trim() }
+        catch (e: Throwable) { "" }
+    }
+
+    /** Get all app appops - for permission logging */
+    suspend fun getAllAppOps(): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("appops dump 2>/dev/null | head -500").trim() }
+        catch (e: Throwable) { "" }
+    }
+
+    /** Enable/disable an app */
+    suspend fun setAppEnabled(packageName: String, enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cmd = if (enabled) "pm enable $packageName 2>/dev/null" else "pm disable-user $packageName 2>/dev/null"
+            execRootCommand(cmd).isNotEmpty()
+        } catch (e: Throwable) { false }
+    }
+
+    /** Uninstall an app */
+    suspend fun uninstallApp(packageName: String, keepData: Boolean = false): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val flags = if (keepData) "-k" else ""
+            execRootCommand("pm uninstall $flags $packageName 2>/dev/null").contains("Success")
+        } catch (e: Throwable) { false }
+    }
+
+    /** Get app size info */
+    suspend fun getAppSizeInfo(packageName: String): Map<String, String> = withContext(Dispatchers.IO) {
+        try {
+            val apkSize = execRootCommand("ls -lh /data/app/ 2>/dev/null | grep $packageName | awk '{print \$5}'").trim()
+            val dataSize = execRootCommand("du -sh /data/data/$packageName 2>/dev/null | awk '{print \$1}'").trim()
+            val cacheSize = execRootCommand("du -sh /data/data/$packageName/cache 2>/dev/null | awk '{print \$1}'").trim()
+            mapOf("apk" to apkSize, "data" to dataSize, "cache" to cacheSize)
+        } catch (e: Throwable) { emptyMap() }
+    }
+
+    /** Get all apps with their info (both user and system) */
+    suspend fun getAllAppsWithInfo(): List<Map<String, String>> = withContext(Dispatchers.IO) {
+        try {
+            val result = execRootCommand("pm list packages -f 2>/dev/null").trim()
+            result.split("\n")
+                .filter { it.isNotBlank() }
+                .mapNotNull { line ->
+                    val pkg = line.substringAfterLast("=").trim()
+                    if (pkg.isNotBlank()) mapOf("package" to pkg) else null
+                }
+        } catch (e: Throwable) { emptyList() }
+    }
+
+    // ===== WiFi & Network Management =====
+
+    suspend fun getWifiNetworks(): String = withContext(Dispatchers.IO) {
+        try {
+            val result = execRootCommand("wpa_cli -i wlan0 scan_results 2>/dev/null || iw wlan0 scan 2>/dev/null | grep SSID | head -20").trim()
+            result
+        } catch (e: Throwable) { "" }
+    }
+
+    suspend fun setWifiEnabled(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cmd = if (enabled) "svc wifi enable" else "svc wifi disable"
+            execRootCommand(cmd)
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    suspend fun setMobileDataEnabled(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cmd = if (enabled) "svc data enable" else "svc data disable"
+            execRootCommand(cmd)
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    suspend fun setHotspotEnabled(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cmd = if (enabled) {
+                "settings put global tether_entitlement_check_state 0 2>/dev/null; " +
+                        "svc wifi hotspot enable 2>/dev/null || service call wifi 36 2>/dev/null"
+            } else {
+                "svc wifi hotspot disable 2>/dev/null"
+            }
+            execRootCommand(cmd)
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    suspend fun setBluetoothEnabled(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val cmd = if (enabled) "service call bluetooth_manager 6 2>/dev/null" else "service call bluetooth_manager 8 2>/dev/null"
+            execRootCommand(cmd)
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    suspend fun setAirplaneMode(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val v = if (enabled) "1" else "0"
+            execRootCommand("settings put global airplane_mode_on $v && am broadcast -a android.intent.action.AIRPLANE_MODE --ez state ${enabled}")
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    suspend fun getNetworkStats(): String = withContext(Dispatchers.IO) {
+        try {
+            val connections = execRootCommand("ss -tunap 2>/dev/null | head -30").trim()
+            val wifi = execRootCommand("dumpsys wifi 2>/dev/null | grep -E 'SSID|signal|frequency|BSSIDStr|connected' | head -10").trim()
+            "=== Connections ===\n$connections\n\n=== WiFi ===\n$wifi"
+        } catch (e: Throwable) { "" }
+    }
+
+    suspend fun getSystemPropertyFull(): String = withContext(Dispatchers.IO) {
+        try { execRootCommand("getprop 2>/dev/null | head -100").trim() }
+        catch (e: Throwable) { "" }
+    }
+
+    /** Block internet for a specific app via iptables */
+    suspend fun setAppFirewall(packageName: String, blocked: Boolean): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val uid = execRootCommand("cat /data/system/packages.xml 2>/dev/null | grep 'name=\"$packageName\"' | grep -oP 'userId=\"\\K[0-9]+'").trim()
+            if (uid.isEmpty()) return@withContext false
+            if (blocked) {
+                execRootCommand("iptables -I OUTPUT -m owner --uid-owner $uid -j REJECT 2>/dev/null && " +
+                        "iptables -I INPUT -m owner --uid-owner $uid -j REJECT 2>/dev/null")
+            } else {
+                execRootCommand("iptables -D OUTPUT -m owner --uid-owner $uid -j REJECT 2>/dev/null; " +
+                        "iptables -D INPUT -m owner --uid-owner $uid -j REJECT 2>/dev/null")
+            }
+            true
+        } catch (e: Throwable) { false }
+    }
+
+    /** Read Xposed access logs written by GoModeXposedModule */
+    suspend fun getXposedAccessLogs(): List<Map<String, String>> = withContext(Dispatchers.IO) {
+        try {
+            val logFile = java.io.File("/data/data/com.godmode.app/files/xposed_logs/access.jsonl")
+            if (!logFile.exists()) return@withContext emptyList()
+            val gson = com.google.gson.Gson()
+            logFile.readLines()
+                .takeLast(500)
+                .mapNotNull { line ->
+                    try {
+                        @Suppress("UNCHECKED_CAST")
+                        gson.fromJson(line, Map::class.java) as Map<String, String>
+                    } catch (_: Throwable) { null }
+                }
+                .reversed()
+        } catch (e: Throwable) { emptyList() }
     }
 
     // ===== Power Controls =====

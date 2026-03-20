@@ -119,40 +119,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkRootAndInitialize() {
         lifecycleScope.launch {
-            val rootManager = (application as GodModeApp).rootManager
-            val rootStatus = rootManager.getRootStatus()
-
-            if (!rootStatus.isRooted) {
-                showNoRootDialog()
-                return@launch
-            }
-
-            // Request root permission
-            val rootGranted = rootManager.requestRoot()
-            if (!rootGranted) {
-                showRootDeniedDialog()
-                return@launch
-            }
-
-            // Install daemon if not already installed
-            if (!rootStatus.isDaemonRunning) {
-                showInstallingProgress(true)
-                val installResult = rootManager.installDaemon()
-                if (installResult.success) {
-                    val started = rootManager.startDaemon()
-                    if (started) {
-                        startDaemonService()
-                        Toast.makeText(this@MainActivity,
-                            "GodMode daemon started successfully", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(this@MainActivity,
-                        "Failed to install daemon: ${installResult.message}",
-                        Toast.LENGTH_LONG).show()
+            try {
+                val rootManager = (application as GodModeApp).rootManager
+                // Non-blocking: check root in background, never block UI
+                val rootGranted = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    try { rootManager.requestRoot() } catch (e: Throwable) { false }
                 }
-                showInstallingProgress(false)
-            } else {
-                startDaemonService()
+                if (rootGranted) {
+                    // Silently try daemon init in background - don't block UI
+                    withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        try { rootManager.installDaemon() } catch (_: Throwable) {}
+                        try { rootManager.startDaemon() } catch (_: Throwable) {}
+                    }
+                    try { startDaemonService() } catch (_: Throwable) {}
+                }
+                // Always refresh dashboard regardless of root result
+                viewModel.refreshStatus()
+            } catch (e: Throwable) {
+                Log.e(TAG, "Background init failed: ${e.message}")
+                viewModel.refreshStatus()
             }
         }
     }
@@ -165,25 +150,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showInstallingProgress(show: Boolean) {
-        binding.progressOverlay.visibility = if (show) View.VISIBLE else View.GONE
+        binding.progressOverlay.visibility = View.GONE // never block UI
     }
 
     private fun showNoRootDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Root Required")
-            .setMessage("GodMode requires root access to function. Your device does not appear to be rooted.\n\nPlease root your device using Magisk or KernelSU and try again.")
-            .setPositiveButton("OK") { _, _ -> finish() }
-            .setCancelable(false)
-            .show()
+        // Don't block the app - just show informational toast
+        Toast.makeText(this, "Root not detected - limited functionality available", Toast.LENGTH_LONG).show()
     }
 
     private fun showRootDeniedDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Root Access Denied")
-            .setMessage("GodMode needs root (su) access to monitor and protect your privacy. Please grant root access when prompted.")
-            .setPositiveButton("Try Again") { _, _ -> checkRootAndInitialize() }
-            .setNegativeButton("Exit") { _, _ -> finish() }
-            .setCancelable(false)
-            .show()
+        Toast.makeText(this, "Root access denied - grant in Magisk/KernelSU and restart", Toast.LENGTH_LONG).show()
     }
 }
