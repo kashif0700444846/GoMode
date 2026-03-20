@@ -63,26 +63,27 @@ class SpoofSettingsActivity : AppCompatActivity() {
     private fun loadAdditionalInfo() {
         lifecycleScope.launch {
             // Get additional device info via root
-            val buildProps = rootManager.nativeExecRoot(
-                "getprop ro.product.model && getprop ro.product.brand && " +
-                "getprop ro.build.fingerprint && getprop ro.serialno"
-            )
+            val buildProps = try {
+                rootManager.execRootCommand(
+                    "getprop ro.product.model && getprop ro.product.brand && " +
+                    "getprop ro.build.fingerprint && getprop ro.serialno"
+                )
+            } catch (e: Throwable) { "" }
             val props = buildProps.trim().split("\n")
             binding.tvModel.text = props.getOrNull(0) ?: "Unknown"
             binding.tvBrand.text = props.getOrNull(1) ?: "Unknown"
             binding.tvFingerprint.text = props.getOrNull(2) ?: "Unknown"
 
-            // Network info
-            // Network info — no awk/single-quote shell issues
-            val networkInfo = rootManager.nativeExecRoot(
-                "ip addr show wlan0 2>/dev/null | grep inet | grep -v inet6 | sed s/.*inet// | cut -d/ -f1 | tr -d [:space:]"
-            )
+            val networkInfo = try {
+                rootManager.execRootCommand(
+                    "ip addr show wlan0 2>/dev/null | grep inet | grep -v inet6 | sed s/.*inet// | cut -d/ -f1 | tr -d [:space:]"
+                )
+            } catch (e: Throwable) { "" }
             binding.tvNetworkInfo.text = networkInfo.trim().ifEmpty { "Not connected" }
 
-            // SIM info
-            val simInfo = rootManager.nativeExecRoot(
-                "getprop gsm.sim.operator.numeric 2>/dev/null"
-            )
+            val simInfo = try {
+                rootManager.execRootCommand("getprop gsm.sim.operator.numeric 2>/dev/null")
+            } catch (e: Throwable) { "" }
             binding.tvSimOperator.text = simInfo.trim().ifEmpty { "Unknown" }
         }
     }

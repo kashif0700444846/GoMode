@@ -9,13 +9,13 @@
         android:icon="@drawable/ic_apps"
         android:title="@string/nav_apps" />
     <item
+        android:id="@+id/modulesFragment"
+        android:icon="@drawable/ic_modules"
+        android:title="@string/nav_modules" />
+    <item
         android:id="@+id/terminalFragment"
         android:icon="@drawable/ic_terminal"
         android:title="@string/nav_terminal" />
-    <item
-        android:id="@+id/logsFragment"
-        android:icon="@drawable/ic_log"
-        android:title="@string/nav_logs" />
     <item
         android:id="@+id/settingsFragment"
         android:icon="@drawable/ic_settings"

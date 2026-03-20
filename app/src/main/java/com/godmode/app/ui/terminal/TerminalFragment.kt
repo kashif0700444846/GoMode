@@ -94,7 +94,9 @@ class TerminalFragment : Fragment() {
             val newDir = if (target.startsWith("/")) target else "$currentDir/$target"
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 val rootManager = (requireActivity().application as GodModeApp).rootManager
-                val result = rootManager.nativeExecRoot("cd $newDir && pwd").trim()
+                val result = try {
+                    rootManager.execRootCommand("cd $newDir && pwd").trim()
+                } catch (e: Throwable) { "Error: ${e.message}" }
                 withContext(Dispatchers.Main) {
                     if (result.startsWith("/") && !result.contains("No such") && !result.contains("error")) {
                         currentDir = result.lines().first()
@@ -111,7 +113,9 @@ class TerminalFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val rootManager = (requireActivity().application as GodModeApp).rootManager
             val fullCmd = "cd $currentDir && $input"
-            val result = rootManager.nativeExecRoot(fullCmd)
+            val result = try {
+                rootManager.execRootCommand(fullCmd)
+            } catch (e: Throwable) { "Error: ${e.message}" }
             withContext(Dispatchers.Main) {
                 if (result.isNotEmpty()) {
                     appendToOutput("$result\n")

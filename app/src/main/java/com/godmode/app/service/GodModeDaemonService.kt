@@ -75,13 +75,14 @@ class GodModeDaemonService : Service() {
             // Poll daemon for new logs every 2 seconds
             while (isActive) {
                 try {
-                    if (rootManager.nativeIsDaemonRunning()) {
-                        val rawLogs = rootManager.nativeGetLogs("*")
+                    val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+                    if (running) {
+                        val rawLogs = try { rootManager.nativeGetLogs("*") } catch (e: Throwable) { "" }
                         if (rawLogs.isNotEmpty()) {
                             processRawLogs(rawLogs)
                         }
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Log.e(TAG, "Error polling logs", e)
                 }
                 delay(2000)

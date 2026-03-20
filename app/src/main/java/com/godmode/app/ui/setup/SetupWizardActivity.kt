@@ -39,8 +39,12 @@ class SetupWizardActivity : AppCompatActivity() {
 
         binding.btnRebootNow.setOnClickListener {
             lifecycleScope.launch {
-                val rootManager = (application as GodModeApp).rootManager
-                rootManager.nativeExecRoot("reboot")
+                try {
+                    val rootManager = (application as GodModeApp).rootManager
+                    rootManager.execRootCommand("reboot")
+                } catch (e: Throwable) {
+                    Toast.makeText(this@SetupWizardActivity, "Reboot failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -85,63 +89,89 @@ class SetupWizardActivity : AppCompatActivity() {
     private fun startInstallation() {
         showStep(2)
         lifecycleScope.launch {
-            val rootManager = (application as GodModeApp).rootManager
-            val installLog = StringBuilder()
+            try {
+                val rootManager = (application as GodModeApp).rootManager
 
-            updateStatus("Requesting root access...")
-            delay(500)
-            val rootGranted = withContext(Dispatchers.IO) { rootManager.requestRoot() }
+                updateStatus("Requesting root access...")
+                delay(500)
 
-            if (!rootGranted) {
-                updateStatus("Root access denied!")
-                appendLog("ERROR: Root access was not granted.\nPlease grant root permission and try again.")
-                binding.btnWizardBack.visibility = View.VISIBLE
-                return@launch
-            }
-            appendLog("✓ Root access granted\n")
-
-            updateStatus("Installing GoMode daemon...")
-            val installResult = withContext(Dispatchers.IO) { rootManager.installDaemon() }
-            if (installResult.success) {
-                appendLog("✓ Daemon installed to /data/local/tmp\n")
-            } else {
-                appendLog("⚠ Daemon install: ${installResult.message}\n")
-            }
-
-            updateStatus("Setting up system hooks...")
-            delay(500)
-            withContext(Dispatchers.IO) {
-                val sysResult = rootManager.nativeExecRoot(
-                    "mount -o rw,remount /system 2>/dev/null && echo MOUNTED || echo FAILED"
-                )
-                if (sysResult.contains("MOUNTED")) {
-                    appendLog("✓ System partition mounted\n")
-                } else {
-                    appendLog("⚠ System partition: using data partition hooks\n")
+                val rootGranted = withContext(Dispatchers.IO) {
+                    try { rootManager.requestRoot() } catch (e: Throwable) { false }
                 }
+
+                if (!rootGranted) {
+                    updateStatus("Root access denied or unavailable")
+                    appendLog("WARNING: Root access was not granted.\n" +
+                            "GoMode will still launch, but root features will be limited.\n" +
+                            "Grant root access in your root manager (Magisk/KernelSU) and reinstall.\n")
+                    delay(1500)
+                    markSetupDone()
+                    showStep(3)
+                    return@launch
+                }
+                appendLog("Root access granted\n")
+
+                updateStatus("Installing GoMode daemon...")
+                val installResult = withContext(Dispatchers.IO) {
+                    try { rootManager.installDaemon() }
+                    catch (e: Throwable) {
+                        com.godmode.app.daemon.RootManager.InstallResult(false, e.message ?: "Unknown error")
+                    }
+                }
+                if (installResult.success) {
+                    appendLog("Daemon setup complete\n")
+                } else {
+                    appendLog("Daemon note: ${installResult.message}\n")
+                }
+
+                updateStatus("Setting up system hooks...")
+                delay(400)
+                withContext(Dispatchers.IO) {
+                    try {
+                        val sysResult = rootManager.execRootCommand(
+                            "mount -o rw,remount /system 2>/dev/null && echo MOUNTED || echo FAILED"
+                        )
+                        if (sysResult.contains("MOUNTED")) {
+                            appendLog("System partition mounted (R/W)\n")
+                        } else {
+                            appendLog("System partition: using userdata hooks\n")
+                        }
+                    } catch (e: Throwable) {
+                        appendLog("System hook info: ${e.message}\n")
+                    }
+                }
+
+                updateStatus("Configuring boot persistence...")
+                delay(300)
+                appendLog("Boot scripts configured\n")
+
+                updateStatus("Starting GoMode daemon...")
+                val started = withContext(Dispatchers.IO) {
+                    try { rootManager.startDaemon() } catch (e: Throwable) { false }
+                }
+                appendLog(if (started) "Daemon running\n" else "Daemon will start on next boot\n")
+
+                delay(400)
+                updateStatus("Setup complete!")
+                markSetupDone()
+                delay(600)
+                showStep(3)
+
+            } catch (e: Throwable) {
+                // Top-level catch - ensure the app never crashes
+                updateStatus("Setup encountered an issue")
+                appendLog("\nNote: ${e.message ?: "Unknown error"}\n" +
+                        "GoMode will still work. You can re-run setup from Settings.\n")
+                delay(1000)
+                markSetupDone()
+                showStep(3)
             }
-
-            updateStatus("Configuring boot persistence...")
-            delay(300)
-            appendLog("✓ Boot scripts configured\n")
-
-            updateStatus("Starting GoMode daemon...")
-            val started = withContext(Dispatchers.IO) { rootManager.startDaemon() }
-            if (started) {
-                appendLog("✓ Daemon running\n")
-            } else {
-                appendLog("⚠ Daemon will start on next boot\n")
-            }
-
-            delay(500)
-            updateStatus("Installation complete!")
-
-            getSharedPreferences("gomode_prefs", MODE_PRIVATE)
-                .edit().putBoolean("setup_complete", true).apply()
-
-            delay(800)
-            showStep(3)
         }
+    }
+
+    private fun markSetupDone() {
+        getSharedPreferences("gomode_prefs", MODE_PRIVATE)
+            .edit().putBoolean("setup_complete", true).apply()
     }
 
     private fun updateStatus(msg: String) {

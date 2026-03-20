@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/tv_tab_title"
+                android:text="Module Manager"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ProgressBar
+                android:id="@+id/progress_modules"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminateTint="@color/accent"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/btn_refresh_modules"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_refresh"
+                android:tint="@color/text_secondary"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Refresh"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_tab_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manage root modules and frameworks"
+            android:textColor="@color/text_hint"
+            android:textSize="11sp"
+            android:layout_marginBottom="10dp" />
+
+        <!-- Framework version badges -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/tv_ksu_version"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="KernelSU: ..."
+                android:textColor="@color/text_hint"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tv_magisk_version_header"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Magisk: ..."
+                android:textColor="@color/text_hint"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tv_lsposed_version"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="LSPosed: ..."
+                android:textColor="@color/text_hint"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tv_zygisk_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Zygisk: ..."
+                android:textColor="@color/text_hint"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Tab Bar -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_card"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@+id/tab_kernelsu"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="KernelSU"
+                android:textColor="@color/accent"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/tab_lsposed"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="LSPosed"
+                android:textColor="@color/text_hint"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/tab_zygisk"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Zygisk"
+                android:textColor="@color/text_hint"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/tab_xplex"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="XPL-EX"
+                android:textColor="@color/text_hint"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="?attr/selectableItemBackground" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Thin accent divider under active tab -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/accent"
+        android:alpha="0.5" />
+
+    <!-- Tab Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- KernelSU Tab Content -->
+            <LinearLayout
+                android:id="@+id/content_kernelsu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tv_empty_kernelsu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No modules found in /data/adb/modules/\n\nInstall Magisk or KernelSU modules via their respective managers.\nModules will appear here automatically."
+                    android:textColor="@color/text_hint"
+                    android:textSize="13sp"
+                    android:padding="24dp"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.5"
+                    android:visibility="gone" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_modules"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- LSPosed Tab Content -->
+            <LinearLayout
+                android:id="@+id/content_lsposed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tv_lsposed_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingMultiplier="1.5"
+                    android:padding="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_lsposed_modules"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+
+            <!-- Zygisk Tab Content -->
+            <LinearLayout
+                android:id="@+id/content_zygisk"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tv_zygisk_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingMultiplier="1.5"
+                    android:padding="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_zygisk_modules"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+
+            <!-- XPL-EX Tab Content -->
+            <LinearLayout
+                android:id="@+id/content_xplex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tv_xplex_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingMultiplier="1.5"
+                    android:padding="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    style="@style/GodMode.CardView">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="DEVICE IDENTIFIERS"
+                            android:textColor="@color/text_hint"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.1"
+                            android:layout_marginBottom="8dp" />
+                        <TextView
+                            android:id="@+id/tv_device_identifiers"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:lineSpacingMultiplier="1.5" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Configure Per-App Privacy (Apps Tab)"
+                    style="@style/GodMode.Button"
+                    android:enabled="false" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

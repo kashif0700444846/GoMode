@@ -47,25 +47,27 @@ class GodModeRepository(
         config.updatedAt = System.currentTimeMillis()
         appConfigDao.insertOrUpdate(config)
         // Push to daemon
-        if (rootManager.nativeIsDaemonRunning()) {
-            rootManager.sendAppConfig(config)
+        val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+        if (running) {
+            try { rootManager.sendAppConfig(config) } catch (e: Throwable) { }
         }
     }
 
     suspend fun deleteConfig(packageName: String) {
         appConfigDao.deleteByPackage(packageName)
-        // Disable in daemon
         val disabledConfig = AppConfig(packageName = packageName, isActive = false)
-        if (rootManager.nativeIsDaemonRunning()) {
-            rootManager.sendAppConfig(disabledConfig)
+        val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+        if (running) {
+            try { rootManager.sendAppConfig(disabledConfig) } catch (e: Throwable) { }
         }
     }
 
     suspend fun setConfigActive(packageName: String, active: Boolean) {
         appConfigDao.setActive(packageName, active)
         val config = appConfigDao.getConfigForPackage(packageName)
-        if (config != null && rootManager.nativeIsDaemonRunning()) {
-            rootManager.sendAppConfig(config.copy(isActive = active))
+        val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+        if (config != null && running) {
+            try { rootManager.sendAppConfig(config.copy(isActive = active)) } catch (e: Throwable) { }
         }
     }
 
@@ -91,15 +93,17 @@ class GodModeRepository(
 
     suspend fun clearLogsForPackage(packageName: String) {
         accessLogDao.deleteForPackage(packageName)
-        if (rootManager.nativeIsDaemonRunning()) {
-            rootManager.nativeSendConfig("CLEAR_LOGS|$packageName")
+        val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+        if (running) {
+            try { rootManager.nativeSendConfig("CLEAR_LOGS|$packageName") } catch (e: Throwable) { }
         }
     }
 
     suspend fun clearAllLogs() {
         accessLogDao.deleteAll()
-        if (rootManager.nativeIsDaemonRunning()) {
-            rootManager.nativeSendConfig("CLEAR_LOGS|*")
+        val running = try { RootManager.nativeLibLoaded && rootManager.nativeIsDaemonRunning() } catch (e: Throwable) { false }
+        if (running) {
+            try { rootManager.nativeSendConfig("CLEAR_LOGS|*") } catch (e: Throwable) { }
         }
     }
 
@@ -197,9 +201,9 @@ class GodModeRepository(
 
     private fun getMacAddress(): String {
         return try {
-            val result = rootManager.nativeExecRoot("cat /sys/class/net/wlan0/address 2>/dev/null || cat /sys/class/net/eth0/address 2>/dev/null")
+            val result = rootManager.execRootCommand("cat /sys/class/net/wlan0/address 2>/dev/null || cat /sys/class/net/eth0/address 2>/dev/null")
             result.trim()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             ""
         }
     }

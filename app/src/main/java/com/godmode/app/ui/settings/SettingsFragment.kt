@@ -139,8 +139,10 @@ class SettingsFragment : Fragment() {
         binding.btnRemountSystem.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 val rootManager = (requireActivity().application as GodModeApp).rootManager
-                val result = rootManager.nativeExecRoot("mount -o rw,remount /system 2>&1")
-                Toast.makeText(requireContext(), if (result.isEmpty() || !result.contains("error")) "Remounted /system as R/W" else result, Toast.LENGTH_LONG).show()
+                val result = try {
+                    rootManager.execRootCommand("mount -o rw,remount /system 2>&1")
+                } catch (e: Throwable) { "Error: ${e.message}" }
+                Toast.makeText(requireContext(), if (result.isEmpty() || !result.lowercase().contains("error")) "Remounted /system as R/W" else result, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -176,7 +178,9 @@ class SettingsFragment : Fragment() {
                 if (cmd.isEmpty()) return@setPositiveButton
                 viewLifecycleOwner.lifecycleScope.launch {
                     val rootManager = (requireActivity().application as GodModeApp).rootManager
-                    val result = rootManager.nativeExecRoot(cmd)
+                    val result = try {
+                        rootManager.execRootCommand(cmd)
+                    } catch (e: Throwable) { "Error: ${e.message}" }
                     AlertDialog.Builder(requireContext())
                         .setTitle("Result")
                         .setMessage(result.ifEmpty { "(no output)" })
