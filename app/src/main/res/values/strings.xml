@@ -117,11 +117,4 @@
     <string name="no_logs">No access logs found</string>
     <string name="log_count">%1$d entries</string>
 
-    <!-- Array for spoof mode spinner -->
-    <string-array name="spoof_modes">
-        <item>Disabled</item>
-        <item>Custom Value</item>
-        <item>Randomize</item>
-        <item>Empty/Null</item>
-    </string-array>
 </resources>
