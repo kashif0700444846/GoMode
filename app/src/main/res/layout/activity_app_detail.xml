@@ -50,7 +50,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IMEI" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_imei_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom IMEI (15 digits)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom IMEI (15 digits)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_imei" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:maxLength="15" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -58,7 +58,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Phone Number" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_phone_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom phone number">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom phone number">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_phone" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="phone" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -66,7 +66,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Network Operator (MCC+MNC)" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_operator_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="MCC+MNC (e.g. 310260)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="MCC+MNC (e.g. 310260)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_mcc_mnc" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
@@ -79,7 +79,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Android ID" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_android_id_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom Android ID (16 hex chars)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom Android ID (16 hex chars)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_android_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLength="16" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -87,7 +87,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Serial Number" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_serial_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom serial number">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom serial number">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_serial" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -95,7 +95,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Advertising ID" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_ad_id_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom Ad ID (UUID format)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom Ad ID (UUID format)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_ad_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
@@ -108,10 +108,10 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
                     <Spinner android:id="@+id/spinner_location_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" style="@style/GodMode.TextInputLayout" app:hint="Latitude">
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" style="@style/GodMode.TextInputLayout" android:hint="Latitude">
                             <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_lat" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal|numberSigned" android:textColor="@color/text_primary"/>
                         </com.google.android.material.textfield.TextInputLayout>
-                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" style="@style/GodMode.TextInputLayout" app:hint="Longitude">
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" style="@style/GodMode.TextInputLayout" android:hint="Longitude">
                             <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_lon" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal|numberSigned" android:textColor="@color/text_primary"/>
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
@@ -125,7 +125,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IP Address" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_ip_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom IP (e.g. 10.0.0.1)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom IP (e.g. 10.0.0.1)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_ip" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -133,7 +133,7 @@
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MAC Address" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
                     <Spinner android:id="@+id/spinner_mac_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom MAC (AA:BB:CC:DD:EE:FF)">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Custom MAC (AA:BB:CC:DD:EE:FF)">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_mac" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
@@ -145,10 +145,10 @@
             <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
                     <Spinner android:id="@+id/spinner_build_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" style="@style/GodMode.TextInputLayout" app:hint="Device Model">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" style="@style/GodMode.TextInputLayout" android:hint="Device Model">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_model" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Brand">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" android:hint="Brand">
                         <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_brand" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
