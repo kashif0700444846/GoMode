@@ -1,148 +1,129 @@
 # GoMode - Product Requirements Document
 
 ## Original Problem Statement
-Build a comprehensive, all-in-one Android root utility called "GoMode" that combines the core functionalities of:
+Build a comprehensive, all-in-one Android root utility called "GoMode" combining:
 - **KernelSU** (kernel-based root + module management)
-- **LSPosed** (ART hooking framework)
-- **XPL-EX** (privacy manager / property spoofing)
+- **LSPosed** (ART hooking framework + Xposed modules)
+- **XPL-EX** (privacy manager / hardware ID spoofing)
 - **NeoZygisk** (Zygote injection)
 
-Into a single user-friendly application for rooted Android devices.
+Into a single user-friendly application. The app should:
+- Work 100% - spoofing must actually intercept app API calls
+- Track ALL app permission accesses with logs
+- Manage ALL installed apps (not just configured ones)
+- Control WiFi, mobile data, hotspot, all system settings
+- Provide network traffic inspection (ProxyPin-like)
 
 ## User Personas
 - Power users with rooted Android devices (Magisk / KernelSU)
-- Privacy-conscious users who want per-app identity spoofing
-- Developers needing a terminal with root access
+- Privacy-conscious users wanting per-app identity spoofing
+- Developers needing root terminal access
 - Users managing Xposed / Zygisk modules
-
-## Core Requirements
-
-### Stability
-- App must NOT crash on first launch (even if root is not available)
-- All native calls must have Kotlin fallbacks
-- Graceful degradation when features are unavailable
-
-### Root Management
-- Detect Magisk / KernelSU / LSPosed / Zygisk status
-- Request and verify root access
-- Execute root shell commands (via native JNI + Kotlin fallback)
-
-### Module Management (Modules Tab)
-- List all installed modules from /data/adb/modules/
-- Enable / Disable / Delete modules
-- KernelSU tab: kernel module management + superuser grants
-- LSPosed tab: Xposed framework status + module list
-- Zygisk tab: NeoZygisk status + companion process list
-- XPL-EX tab: Privacy engine overview + live device identifier read
-
-### Privacy Engine (XPL-EX inspired)
-- Per-app property spoofing (IMEI, Android ID, Serial, GPS, MAC)
-- Configurable via the Apps tab
-- Access logging per app
-
-### Terminal
-- Root shell with command history
-- cd navigation
-- Clear button + scrollable output
-
-### Power Menu
-- Reboot, Power Off
-- Reboot to Recovery, Bootloader, EDL
-- Safe Mode reboot
-
-### Setup Wizard
-- First-launch setup that installs the GoMode daemon
-- Graceful error handling - never crashes even if root is unavailable
 
 ## Architecture
 
 ```
 /app
-├── .github/workflows/build.yml         # GitHub Actions CI/CD
-├── app/
-│   ├── build.gradle                    # arm64-v8a ABI restricted
-│   └── src/main/
-│       ├── cpp/                        # Native C++ (JNI, ptrace, hooking)
-│       ├── java/com/godmode/app/
-│       │   ├── GodModeApp.kt           # Application class
-│       │   ├── daemon/
-│       │   │   └── RootManager.kt      # All root ops + module management
-│       │   ├── data/                   # Room DB, models, repository
-│       │   ├── service/                # Background services
-│       │   └── ui/
-│       │       ├── setup/SetupWizardActivity.kt
-│       │       ├── dashboard/DashboardFragment.kt
-│       │       ├── apps/AppsFragment.kt
-│       │       ├── modules/ModulesFragment.kt  # NEW: Module manager
-│       │       ├── terminal/TerminalFragment.kt
-│       │       ├── logs/LogsFragment.kt
-│       │       └── settings/SettingsFragment.kt
-│       └── res/
-│           ├── layout/
-│           │   ├── fragment_modules.xml   # NEW
-│           │   └── item_module.xml        # NEW
-│           ├── navigation/nav_graph.xml   # Updated with modulesFragment
-│           └── menu/bottom_nav_menu.xml   # Dashboard/Apps/Modules/Terminal/Settings
+├── .github/workflows/build.yml              # GitHub Actions CI/CD
+└── app/src/main/
+    ├── assets/xposed_init                   # Xposed module entry point
+    ├── cpp/                                 # Native C++ (JNI, ptrace, hooking)
+    ├── java/com/godmode/app/
+    │   ├── xposed/GoModeXposedModule.kt     # LSPosed hooks (100% spoofing)
+    │   ├── daemon/RootManager.kt            # All root ops + app management
+    │   ├── data/                            # Room DB, models, repository
+    │   ├── service/                         # Background services
+    │   └── ui/
+    │       ├── setup/SetupWizardActivity.kt
+    │       ├── dashboard/DashboardFragment.kt
+    │       ├── apps/AppsFragment.kt + AppDetailActivity.kt
+    │       ├── modules/ModulesFragment.kt   # KernelSU/LSPosed/Zygisk/XPL-EX
+    │       ├── network/NetworkFragment.kt   # WiFi/network/system settings
+    │       └── settings/SettingsFragment.kt  # Power menu + terminal access
+    └── res/
+        ├── navigation/nav_graph.xml         # Dashboard/Apps/Modules/Network/Settings
+        └── menu/bottom_nav_menu.xml         # 5-tab bottom nav
 ```
 
-## What's Been Implemented
+## Implemented Features
 
-### v1 (Initial Build)
-- Fixed all native C++ compilation errors (ARMv7/ARM64, builtins, cast issues)
-- Fixed AAPT2 resource errors (styles, color duplicates, app:hint → android:hint)
-- Established GitHub Actions CI/CD pipeline
+### v3 (2026-03-20) - Crash Fix + Module Manager
+- Fixed P0 startup crash (Throwable handling)
+- Module Manager with KernelSU/LSPosed/Zygisk/XPL-EX tabs
+- Better root command execution with Kotlin fallback
 
-### v2 (Feature Overhaul)
-- Renamed app from "GodMode" to "GoMode"
-- Fixed app list UI (item_app.xml visibility)
-- Added Setup Wizard (SetupWizardActivity)
-- Added Terminal UI (TerminalFragment)
-- Added Power Menu in Settings
-- Updated AndroidManifest with all system permissions
+### v4 (2026-03-20) - Full Privacy Engine + App Management
+**XPOSED MODULE (100% spoofing via LSPosed):**
+- `GoModeXposedModule.kt` hooks into every app process
+- IMEI/MEID/DeviceId interception (3 methods + dual SIM)
+- IMSI/subscriber ID spoofing
+- Android ID spoofing via Settings.Secure hook
+- Build.SERIAL, Build.MODEL, Build.BRAND, Build.FINGERPRINT fields
+- WiFi MAC (WifiInfo + java.net.NetworkInterface)
+- Widevine DRM deviceUniqueId spoofing
+- GPS/Location spoofing (getLastKnownLocation)
+- Camera blocking (CameraManager + legacy Camera API)
+- Microphone blocking (AudioRecord + MediaRecorder)
+- Google Play Advertising ID spoofing
+- Access logging: JSON written to xposed_logs/access.jsonl
+- Config via XSharedPreferences (LSPosed bridges cross-process access)
+- `AndroidManifest.xml` has xposedmodule/description/minversion metadata
+- `assets/xposed_init` registers the hook class
 
-### v3 (Crash Fix + Module Manager) - 2026-03-20
-- **FIXED P0 CRASH**: Changed catch(Exception) → catch(Throwable) across all native calls
-- Added `execRootCommand()` safe wrapper with Kotlin fallback (no JNI required)
-- Added `nativeLibLoaded` flag to prevent calling unloaded native methods
-- SetupWizardActivity: entire install coroutine wrapped in try-catch
-- Repository, DaemonService, SpoofSettingsActivity all migrated to safe wrappers
-- **NEW: ModulesFragment** with 4-tab UI (KernelSU/LSPosed/Zygisk/XPL-EX)
-  - Module list from /data/adb/modules/ with enable/disable/delete
-  - Framework version detection (Magisk/KernelSU/LSPosed/Zygisk)
-  - Superuser grants via Magisk/KernelSU sqlite
-  - NeoZygisk companion process management
-  - XPL-EX privacy engine overview + live device identifiers
-- Navigation: Modules tab replaces Logs in bottom nav (5 tabs)
-- APK Build #18: SUCCESS (6.1 MB)
+**APP MANAGEMENT:**
+- Force Stop app (am force-stop)
+- Clear Cache (rm -rf cache dirs)
+- Clear Data (pm clear)
+- Open App
+- View Permissions + App Ops (pm dump + appops get)
+- pm grant/revoke applied immediately when blocking camera/mic
+- AppDetailActivity.saveConfig() writes XSharedPreferences for Xposed module
+
+**NETWORK & SYSTEM SETTINGS TAB:**
+- WiFi/Mobile Data/Hotspot/Bluetooth/Airplane Mode toggles
+- WiFi network scanner (wpa_cli)
+- DNS configurator (setprop net.dns1/dns2)
+- /etc/hosts editor (ad-blocking, bypass)
+- iptables firewall viewer
+- Active connections (ss -tunap)
+- Traffic stats (/proc/net/xt_qtaguid)
+- resetprop/setprop system property editor
+
+**BUG FIXES:**
+- MainActivity no longer blocks UI with daemon install dialog
+- Root tool detection uses execRootCommand() (KernelSU/Magisk/LSPosed now detected)
+- IMEI reading via 3 fallback methods
+- Dashboard shows actual version strings (green=detected, grey=not found)
+- Banner guides user to enable GoMode in LSPosed Manager
 
 ## Build Info
-- CI/CD: GitHub Actions → https://github.com/kashif0700444846/GoMode/actions
-- Latest successful APK: Build #18 (run 23360790026)
-- Download: https://github.com/kashif0700444846/GoMode/actions/runs/23360790026
-
-## DB Schema
-- **app_configs**: Per-app spoofing configs (packageName PK)
-- **access_logs**: Property access logs per app
+- Latest APK: Build #20 (Run 23364257718)
+- Download: https://github.com/kashif0700444846/GoMode/actions/runs/23364257718
+- APK Size: ~6.2 MB
 
 ## Prioritized Backlog
 
-### P0 (Critical)
-- None currently
+### P0 (Critical - user to test)
+- User must enable GoMode in LSPosed Manager after installing APK
+- User should reboot after enabling for hooks to take effect
 
-### P1 (High Priority)
-- Deep KernelSU integration: Read and manage superuser grants UI list
-- LSPosed scope editor: Per-module per-app hook enable/disable
-- Terminal: Multi-line input, better output formatting, ANSI color support
+### P1 (Next Implementation)
+- Network traffic inspector (ProxyPin-like): intercept HTTP/HTTPS
+  - Option A: VpnService-based packet capture (no extra binaries)
+  - Option B: iptables TPROXY + mitmproxy approach
+- LSPosed scope editor: per-module per-app hook enable/disable
+- Show ALL installed apps in Apps tab (not just configured ones)
+- App icon display with logs (show which app icon alongside access log)
 
 ### P2 (Medium Priority)
-- Magisk module flasher: Install .zip modules directly from GoMode
-- Xposed module installer: Download and install from common repos
-- Privacy profiles: Save/restore full privacy configurations
-- App log viewer improvements
+- Magisk/KernelSU module flasher (install .zip modules directly)
+- App-to-app communication tracking (Binder IPC logging)
+- Privacy profiles: save/load full identity sets
+- APK installer/manager
 
 ### Future/Backlog
-- Magisk module builder for GoMode persistence
-- KernelSU native support (ksud integration)
+- Full ProxyPin-equivalent: SSL interception + request modification UI
 - SELinux policy manager
-- Hosts file editor with ad-blocking profiles
-- Build.prop editor with safety backup
+- Build.prop editor with live apply
+- Hosts file with built-in ad-block lists
+- KernelSU superuser grants full management
