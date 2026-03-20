@@ -1,4 +1,5 @@
 #pragma once
+#include <sys/types.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <linux/android/binder.h>

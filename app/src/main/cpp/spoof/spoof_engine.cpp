@@ -23,6 +23,7 @@
 #include <time.h>
 #include <math.h>
 #include <pthread.h>
+#include <sys/types.h>
 #include <linux/android/binder.h>
 
 #define TAG "GodMode_Spoof"

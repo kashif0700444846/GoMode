@@ -19,6 +19,7 @@
 #include "inline_hook.h"
 #include "../spoof/spoof_engine.h"
 #include "../ipc/socket_client.h"
+#include <sys/types.h>
 #include <android/log.h>
 #include <sys/ioctl.h>
 #include <linux/android/binder.h>
@@ -29,7 +30,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <time.h>
-#include <sys/types.h>
 
 #define TAG "GodMode_Binder"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
