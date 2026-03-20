@@ -41,9 +41,9 @@ All fixes were made iteratively by monitoring GitHub Actions CI logs:
 - APK artifact upload (debug build)
 
 ## APK
-- **File**: `GodMode-debug.apk` (16MB, debug unsigned)
-- **GitHub Actions Run**: https://github.com/kashif0700444846/GoMode/actions/runs/23355211581
-- **Direct Artifact**: Available in GitHub Actions artifacts for Run #13
+- **File**: `GoMode-debug.apk` (16MB, debug build)
+- **GitHub Actions Run #17**: https://github.com/kashif0700444846/GoMode/actions/runs/23357127033
+- **Direct Download**: Actions → Run #17 → Artifacts → "GodMode-Debug-APK"
 
 ## Requirements (Static)
 - Root access required (Magisk or KernelSU)
