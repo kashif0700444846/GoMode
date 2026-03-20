@@ -134,8 +134,8 @@ class DashboardFragment : Fragment() {
 
         // Tool detection
         binding.tvMagiskStatus.text = if (status.hasMagisk) "Detected" else "Not Found"
-        binding.tvKernelSUStatus.text = if (status.hasKernelSU) "Detected" else "Not Found"
-        binding.tvLSPosedStatus.text = if (status.hasLSPosed) "Detected" else "Not Found"
+        binding.tvKernelsuStatus.text = if (status.hasKernelSU) "Detected" else "Not Found"
+        binding.tvLsposedStatus.text = if (status.hasLSPosed) "Detected" else "Not Found"
 
         // Daemon version
         if (status.daemonVersion.isNotEmpty()) {
