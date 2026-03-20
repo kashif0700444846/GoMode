@@ -388,6 +388,8 @@ class RootManager private constructor(private val context: Context) {
     suspend fun rebootSafeMode(): Unit = withContext(Dispatchers.IO) {
         try { nativeExecRoot("reboot safe-mode 2>/dev/null || setprop persist.sys.safemode 1 && reboot") } catch (_: Exception) {}
     }
+
+    data class InstallResult(
         val success: Boolean,
         val message: String
     )
