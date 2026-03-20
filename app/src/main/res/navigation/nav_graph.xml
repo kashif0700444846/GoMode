@@ -19,6 +19,13 @@
         xmlns:tools="http://schemas.android.com/tools" />
 
     <fragment
+        android:id="@+id/terminalFragment"
+        android:name="com.godmode.app.ui.terminal.TerminalFragment"
+        android:label="Terminal"
+        tools:layout="@layout/fragment_terminal"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <fragment
         android:id="@+id/logsFragment"
         android:name="com.godmode.app.ui.logs.LogsFragment"
         android:label="Logs"

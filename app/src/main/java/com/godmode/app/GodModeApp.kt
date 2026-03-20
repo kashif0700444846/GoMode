@@ -38,10 +38,10 @@ class GodModeApp : Application() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val daemonChannel = NotificationChannel(
                 CHANNEL_ID_DAEMON,
-                "GodMode Daemon",
+                "GoMode Daemon",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "GodMode root daemon monitoring service"
+                description = "GoMode root daemon monitoring service"
                 setShowBadge(false)
             }
 

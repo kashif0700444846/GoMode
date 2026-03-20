@@ -73,8 +73,9 @@ class SpoofSettingsActivity : AppCompatActivity() {
             binding.tvFingerprint.text = props.getOrNull(2) ?: "Unknown"
 
             // Network info
+            // Network info — no awk/single-quote shell issues
             val networkInfo = rootManager.nativeExecRoot(
-                "ip addr show wlan0 2>/dev/null | grep 'inet ' | awk '{print $2}'"
+                "ip addr show wlan0 2>/dev/null | grep inet | grep -v inet6 | sed s/.*inet// | cut -d/ -f1 | tr -d [:space:]"
             )
             binding.tvNetworkInfo.text = networkInfo.trim().ifEmpty { "Not connected" }
 

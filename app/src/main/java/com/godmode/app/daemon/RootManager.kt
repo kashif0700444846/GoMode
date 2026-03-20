@@ -243,12 +243,27 @@ class RootManager private constructor(private val context: Context) {
     }
 
     /**
-     * Get the real device IMEI (before spoofing).
+     * Get the real device IMEI (before spoofing) — uses multiple fallback methods.
      */
     suspend fun getRealImei(): String = withContext(Dispatchers.IO) {
         try {
-            val result = nativeExecRoot("service call iphonesubinfo 4 | cut -c 52-66 | tr -d '.[:space:]'")
-            result.trim()
+            // Method 1: dumpsys iphonesubinfo (no single quotes, works in su -c '...')
+            var result = nativeExecRoot(
+                "dumpsys iphonesubinfo 2>/dev/null | grep -i Device | tail -1 | cut -d= -f2 | tr -d . | tr -d \" \""
+            ).trim()
+            if (result.matches(Regex("[0-9]{14,15}"))) return@withContext result
+
+            // Method 2: getprop variants
+            for (prop in listOf("ril.imei1", "ril.imei", "gsm.imei", "persist.radio.device.imei")) {
+                result = nativeExecRoot("getprop $prop 2>/dev/null").trim()
+                if (result.matches(Regex("[0-9]{14,15}"))) return@withContext result
+            }
+
+            // Method 3: sysfs
+            result = nativeExecRoot("cat /sys/class/gsm_phone/phone0/imei 2>/dev/null").trim()
+            if (result.isNotEmpty() && !result.contains("No such")) return@withContext result
+
+            ""
         } catch (e: Exception) {
             ""
         }
@@ -332,7 +347,47 @@ class RootManager private constructor(private val context: Context) {
         }
     }
 
-    data class InstallResult(
+    /**
+     * Reboot the device.
+     */
+    suspend fun reboot(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("reboot") } catch (_: Exception) {}
+    }
+
+    /**
+     * Power off the device.
+     */
+    suspend fun powerOff(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("poweroff") } catch (_: Exception) {}
+    }
+
+    /**
+     * Reboot to recovery.
+     */
+    suspend fun rebootRecovery(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("reboot recovery") } catch (_: Exception) {}
+    }
+
+    /**
+     * Reboot to bootloader/fastboot.
+     */
+    suspend fun rebootBootloader(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("reboot bootloader") } catch (_: Exception) {}
+    }
+
+    /**
+     * Reboot to EDL/download mode.
+     */
+    suspend fun rebootEdl(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("reboot edl 2>/dev/null || reboot download 2>/dev/null") } catch (_: Exception) {}
+    }
+
+    /**
+     * Reboot to safe mode.
+     */
+    suspend fun rebootSafeMode(): Unit = withContext(Dispatchers.IO) {
+        try { nativeExecRoot("reboot safe-mode 2>/dev/null || setprop persist.sys.safemode 1 && reboot") } catch (_: Exception) {}
+    }
         val success: Boolean,
         val message: String
     )

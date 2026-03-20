@@ -20,6 +20,92 @@
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
 
+        <!-- Power Controls -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            style="@style/GodMode.CardView">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="POWER"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="10dp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                    <Button android:id="@+id/btn_reboot" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="Reboot" style="@style/GodMode.Button" />
+                    <Button android:id="@+id/btn_power_off" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Power Off" android:backgroundTint="@color/red_danger" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                    <Button android:id="@+id/btn_reboot_recovery" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="Recovery" style="@style/GodMode.Button.Outlined" />
+                    <Button android:id="@+id/btn_reboot_bootloader" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bootloader" style="@style/GodMode.Button.Outlined" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <Button android:id="@+id/btn_reboot_edl" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="EDL / Download" style="@style/GodMode.Button.Outlined" />
+                    <Button android:id="@+id/btn_reboot_safe" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Safe Mode" style="@style/GodMode.Button.Outlined" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Terminal Quick Access -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            style="@style/GodMode.CardView">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SYSTEM TOOLS"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="10dp" />
+                <Button android:id="@+id/btn_run_shell_cmd" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Run Custom Shell Command" android:layout_marginBottom="8dp" style="@style/GodMode.Button.Outlined" />
+                <Button android:id="@+id/btn_remount_system" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Remount /system as R/W" android:layout_marginBottom="8dp" style="@style/GodMode.Button.Outlined" />
+                <Button android:id="@+id/btn_reset_setup" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Run Setup Wizard Again" style="@style/GodMode.Button.Outlined" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Global Spoof Settings -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            style="@style/GodMode.CardView">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GLOBAL SPOOFING" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Enable spoofing engine" android:textColor="@color/text_primary" android:textSize="13sp"/>
+                    <Switch android:id="@+id/switch_global_spoof" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider" android:checked="true"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block location for new apps" android:textColor="@color/text_primary" android:textSize="13sp"/>
+                    <Switch android:id="@+id/switch_block_location" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Hide root from apps" android:textColor="@color/text_primary" android:textSize="13sp"/>
+                    <Switch android:id="@+id/switch_hide_root" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider" android:checked="true"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Daemon Status -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -156,7 +242,7 @@
                     android:textSize="11sp"
                     android:letterSpacing="0.1"
                     android:layout_marginBottom="8dp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GodMode v1.0.0" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GoMode v1.0.0" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Privacy Monitor &amp; Spoof Engine" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginTop="2dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Root daemon + ptrace hook engine" android:textColor="@color/text_hint" android:textSize="11sp" android:layout_marginTop="4dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Supports Android 10–16 (ARM64)" android:textColor="@color/text_hint" android:textSize="11sp"/>

@@ -144,7 +144,7 @@ class GodModeDaemonService : Service() {
         )
 
         return NotificationCompat.Builder(this, GodModeApp.CHANNEL_ID_DAEMON)
-            .setContentTitle("GodMode Active")
+            .setContentTitle("GoMode Active")
             .setContentText("Monitoring all app data access")
             .setSmallIcon(R.drawable.ic_shield)
             .setContentIntent(mainPendingIntent)

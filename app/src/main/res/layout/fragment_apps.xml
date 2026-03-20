@@ -38,17 +38,17 @@
             android:layout_height="wrap_content"
             app:singleSelection="true">
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_user_apps"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User Apps"
-                android:checked="true"
-                style="@style/GodMode.Chip" />
-            <com.google.android.material.chip.Chip
                 android:id="@+id/chip_all_apps"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="All Apps"
+                android:checked="true"
+                style="@style/GodMode.Chip" />
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_user_apps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User Apps"
                 style="@style/GodMode.Chip" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_protected"

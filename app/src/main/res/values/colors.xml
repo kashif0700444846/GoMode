@@ -34,4 +34,7 @@
 
     <!-- Divider -->
     <color name="divider">#1E1E30</color>
+    <color name="red_danger">#CC2222</color>
+    <color name="green_success">#22CC44</color>
+    <color name="bg_card_elevated">#1A1A28</color>
 </resources>

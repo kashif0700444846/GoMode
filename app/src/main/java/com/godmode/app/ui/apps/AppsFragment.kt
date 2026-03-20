@@ -33,7 +33,7 @@ class AppsFragment : Fragment() {
     private lateinit var repository: GodModeRepository
     private lateinit var adapter: AppListAdapter
     private var allApps: List<AppListItem> = emptyList()
-    private var showSystemApps = false
+    private var showSystemApps = true  // Default: show ALL apps
 
     data class AppListItem(
         val packageName: String,

@@ -25,6 +25,7 @@ import com.godmode.app.ui.dashboard.DashboardViewModel
 import com.godmode.app.ui.dashboard.DashboardViewModelFactory
 import com.godmode.app.data.db.GodModeDatabase
 import com.godmode.app.data.repository.GodModeRepository
+import com.godmode.app.ui.setup.SetupWizardActivity
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -44,6 +45,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check if first-time setup is needed
+        val prefs = getSharedPreferences("gomode_prefs", MODE_PRIVATE)
+        if (!prefs.getBoolean("setup_complete", false)) {
+            startActivity(Intent(this, SetupWizardActivity::class.java))
+            finish()
+            return
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -75,9 +85,31 @@ class MainActivity : AppCompatActivity() {
     private fun requestPermissions() {
         val permissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+            listOf(
+                android.Manifest.permission.POST_NOTIFICATIONS,
+                android.Manifest.permission.READ_MEDIA_IMAGES,
+                android.Manifest.permission.READ_MEDIA_VIDEO,
+                android.Manifest.permission.READ_MEDIA_AUDIO
+            ).forEach { perm ->
+                if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                    permissions.add(perm)
+                }
+            }
+        }
+        listOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.READ_PHONE_STATE,
+            android.Manifest.permission.READ_CONTACTS,
+            android.Manifest.permission.READ_CALL_LOG,
+            android.Manifest.permission.READ_SMS,
+            android.Manifest.permission.ACTIVITY_RECOGNITION,
+            android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.BODY_SENSORS
+        ).forEach { perm ->
+            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(perm)
             }
         }
         if (permissions.isNotEmpty()) {

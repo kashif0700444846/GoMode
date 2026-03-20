@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GodMode</string>
-    <string name="app_description">Privacy Monitor &amp; Spoof Engine</string>
+    <string name="app_name">GoMode</string>
+    <string name="app_description">System Control &amp; Privacy Engine</string>
+    <string name="nav_terminal">Terminal</string>
+    <string name="nav_power">Power</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>
@@ -110,10 +112,10 @@
     <string name="config_saved">Configuration saved and applied</string>
     <string name="config_deleted">Configuration deleted</string>
     <string name="logs_cleared">Logs cleared</string>
-    <string name="daemon_started">GodMode daemon started</string>
-    <string name="daemon_stopped_msg">GodMode daemon stopped</string>
+    <string name="daemon_started">GoMode daemon started</string>
+    <string name="daemon_stopped_msg">GoMode daemon stopped</string>
     <string name="root_required">Root access required</string>
-    <string name="installing_daemon">Installing GodMode daemon…</string>
+    <string name="installing_daemon">Installing GoMode daemon…</string>
     <string name="no_logs">No access logs found</string>
     <string name="log_count">%1$d entries</string>
 

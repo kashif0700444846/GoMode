@@ -6,15 +6,15 @@
     android:orientation="horizontal"
     android:padding="12dp"
     android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground"
+    android:background="@color/bg_card"
     android:clickable="true"
     android:focusable="true">
 
     <ImageView
         android:id="@+id/iv_app_icon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="12dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="14dp"
         android:src="@drawable/ic_apps" />
 
     <LinearLayout
@@ -53,11 +53,5 @@
         android:layout_height="wrap_content"
         android:thumbTint="@color/accent"
         android:trackTint="@color/divider" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider"
-        android:layout_gravity="bottom" />
 
 </LinearLayout>

@@ -179,8 +179,17 @@ class GodModeRepository(
 
     private fun getLocalIpAddress(): String {
         return try {
-            val result = rootManager.nativeExecRoot("ip route get 8.8.8.8 | awk '{print $7}' | head -1")
-            result.trim()
+            // Use Java NetworkInterface API — reliable, no shell commands needed
+            val interfaces = java.net.NetworkInterface.getNetworkInterfaces() ?: return ""
+            for (intf in java.util.Collections.list(interfaces)) {
+                if (intf.isLoopback || !intf.isUp) continue
+                for (addr in java.util.Collections.list(intf.inetAddresses)) {
+                    if (addr is java.net.Inet4Address && !addr.isLoopbackAddress) {
+                        return addr.hostAddress ?: ""
+                    }
+                }
+            }
+            ""
         } catch (e: Exception) {
             ""
         }

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
+
+        <ImageView
+            android:id="@+id/iv_logo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_shield"
+            android:tint="@color/accent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GoMode"
+            android:textColor="@color/accent"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="System Control Engine"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <!-- Step indicator -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:layout_marginBottom="24dp">
+
+        <View android:id="@+id/step_dot_1"
+            android:layout_width="10dp" android:layout_height="10dp"
+            android:background="@color/accent"
+            android:layout_marginEnd="6dp" />
+        <View android:id="@+id/step_dot_2"
+            android:layout_width="10dp" android:layout_height="10dp"
+            android:background="@color/divider"
+            android:layout_marginEnd="6dp" />
+        <View android:id="@+id/step_dot_3"
+            android:layout_width="10dp" android:layout_height="10dp"
+            android:background="@color/divider" />
+    </LinearLayout>
+
+    <!-- Steps container -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Step 1: Welcome -->
+        <LinearLayout
+            android:id="@+id/step_welcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to GoMode"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GoMode gives you complete control over your Android system:\n\n  Device Identity Spoofing\n  Network Control\n  Location Override\n  App Permission Control\n  Root Shell Terminal\n  System-level Hooks\n\nGoMode will now install its daemon and system hooks. This requires root access."
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4" />
+        </LinearLayout>
+
+        <!-- Step 2: Installing -->
+        <LinearLayout
+            android:id="@+id/step_installing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Installing GoMode"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <ProgressBar
+                android:id="@+id/progress_install"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:indeterminateTint="@color/accent"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tv_install_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Requesting root access..."
+                android:textColor="@color/accent"
+                android:textSize="13sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tv_install_log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:lineSpacingMultiplier="1.3"
+                android:layout_marginTop="12dp" />
+        </LinearLayout>
+
+        <!-- Step 3: Complete -->
+        <LinearLayout
+            android:id="@+id/step_complete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GoMode Ready"
+                android:textColor="@color/green_success"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/tv_complete_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GoMode has been installed successfully.\n\nFor system-level hooks to work completely, a reboot is required to load the hook library."
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/btn_reboot_now"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Reboot Now"
+                android:backgroundTint="@color/accent"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_skip_reboot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Continue Without Reboot"
+                android:backgroundTint="@color/bg_card_elevated" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Bottom action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="24dp"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_wizard_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            android:backgroundTint="@color/bg_card_elevated"
+            android:visibility="gone"
+            android:layout_marginEnd="12dp" />
+
+        <Button
+            android:id="@+id/btn_wizard_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Install Now"
+            android:backgroundTint="@color/accent" />
+    </LinearLayout>
+</LinearLayout>
