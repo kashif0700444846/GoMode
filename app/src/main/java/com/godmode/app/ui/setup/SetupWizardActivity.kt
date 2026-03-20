@@ -12,6 +12,7 @@ import com.godmode.app.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 
 class SetupWizardActivity : AppCompatActivity() {
@@ -96,7 +97,9 @@ class SetupWizardActivity : AppCompatActivity() {
                 delay(500)
 
                 val rootGranted = withContext(Dispatchers.IO) {
-                    try { rootManager.requestRoot() } catch (e: Throwable) { false }
+                    withTimeoutOrNull(12_000) {
+                        try { rootManager.requestRoot() } catch (e: Throwable) { false }
+                    } ?: false
                 }
 
                 if (!rootGranted) {
@@ -113,10 +116,12 @@ class SetupWizardActivity : AppCompatActivity() {
 
                 updateStatus("Installing GoMode daemon...")
                 val installResult = withContext(Dispatchers.IO) {
-                    try { rootManager.installDaemon() }
-                    catch (e: Throwable) {
-                        com.godmode.app.daemon.RootManager.InstallResult(false, e.message ?: "Unknown error")
-                    }
+                    withTimeoutOrNull(25_000) {
+                        try { rootManager.installDaemon() }
+                        catch (e: Throwable) {
+                            com.godmode.app.daemon.RootManager.InstallResult(false, e.message ?: "Unknown error")
+                        }
+                    } ?: com.godmode.app.daemon.RootManager.InstallResult(false, "Daemon install timed out")
                 }
                 if (installResult.success) {
                     appendLog("Daemon setup complete\n")
@@ -147,7 +152,9 @@ class SetupWizardActivity : AppCompatActivity() {
 
                 updateStatus("Starting GoMode daemon...")
                 val started = withContext(Dispatchers.IO) {
-                    try { rootManager.startDaemon() } catch (e: Throwable) { false }
+                    withTimeoutOrNull(12_000) {
+                        try { rootManager.startDaemon() } catch (e: Throwable) { false }
+                    } ?: false
                 }
                 appendLog(if (started) "Daemon running\n" else "Daemon will start on next boot\n")
 

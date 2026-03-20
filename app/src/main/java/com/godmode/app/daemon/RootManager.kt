@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -93,31 +92,94 @@ class RootManager private constructor(private val context: Context) {
         val policy: String
     )
 
+    data class XposedAccessLog(
+        val packageName: String,
+        val propertyType: String,
+        val value: String,
+        val timestamp: Long,
+        val wasSpoofed: Boolean
+    )
+
     /**
      * Execute a root command with fallback to pure Kotlin implementation.
      * This is the safe wrapper to use throughout the app.
      */
     fun execRootCommand(command: String): String {
-        if (nativeLibLoaded) {
-            try {
-                return nativeExecRoot(command)
-            } catch (e: Throwable) {
-                Log.w(TAG, "Native exec failed, using Kotlin fallback: ${e.message}")
-            }
-        }
         return execRootCommandKotlin(command)
     }
 
-    private fun execRootCommandKotlin(command: String): String {
+    fun execRootCommand(command: String, timeoutSeconds: Long): String {
+        return execRootCommandKotlin(command, timeoutSeconds)
+    }
+
+    private fun execRootCommandKotlin(command: String, timeoutSeconds: Long = 15): String {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            val output = process.inputStream.bufferedReader().readText()
-            val error = process.errorStream.bufferedReader().readText()
-            process.waitFor(15, TimeUnit.SECONDS)
-            (output + error).trim()
+            val process = ProcessBuilder("su", "-c", command).start()
+
+            val outputBuilder = StringBuilder()
+            val errorBuilder = StringBuilder()
+
+            val outputThread = Thread {
+                try {
+                    process.inputStream.bufferedReader().useLines { lines ->
+                        lines.forEach {
+                            outputBuilder.append(it).append('\n')
+                        }
+                    }
+                } catch (_: Throwable) {
+                }
+            }
+
+            val errorThread = Thread {
+                try {
+                    process.errorStream.bufferedReader().useLines { lines ->
+                        lines.forEach {
+                            errorBuilder.append(it).append('\n')
+                        }
+                    }
+                } catch (_: Throwable) {
+                }
+            }
+
+            outputThread.start()
+            errorThread.start()
+
+            val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroy()
+                if (process.isAlive) process.destroyForcibly()
+                outputThread.join(250)
+                errorThread.join(250)
+                return "Error: command timed out after ${timeoutSeconds}s"
+            }
+
+            outputThread.join(250)
+            errorThread.join(250)
+
+            val output = outputBuilder.toString().trim()
+            val error = errorBuilder.toString().trim()
+
+            when {
+                output.isNotEmpty() && error.isNotEmpty() -> "$output\n$error"
+                output.isNotEmpty() -> output
+                error.isNotEmpty() -> error
+                else -> ""
+            }
         } catch (e: Throwable) {
             Log.e(TAG, "Kotlin root exec failed: ${e.message}")
             "Error: ${e.message}"
+        }
+    }
+
+    private fun isDaemonRunningSafe(): Boolean {
+        return try {
+            val socketCheck = execRootCommand("test -S /dev/socket/godmoded && echo YES || echo NO", 5)
+            if (socketCheck.contains("YES")) return true
+
+            val pid = execRootCommand("pidof godmoded 2>/dev/null", 5).trim()
+            pid.isNotEmpty() && !pid.startsWith("Error")
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -148,9 +210,7 @@ class RootManager private constructor(private val context: Context) {
                 r.isNotEmpty() && !r.startsWith("Error") && !r.contains("No such file")
             } catch (e: Throwable) { false }
 
-            val isDaemonRunning = if (nativeLibLoaded) {
-                try { nativeIsDaemonRunning() } catch (e: Throwable) { false }
-            } else false
+            val isDaemonRunning = isDaemonRunningSafe()
 
             var daemonVersion = ""
             if (isDaemonRunning && nativeLibLoaded) {
@@ -194,6 +254,20 @@ class RootManager private constructor(private val context: Context) {
      */
     suspend fun installDaemon(): InstallResult = withContext(Dispatchers.IO) {
         try {
+            // Ensure shared runtime directories used by app + Xposed hooks
+            execRootCommand(
+                "mkdir -p /data/local/tmp/gomode/config /data/local/tmp/gomode/logs /data/local/tmp/gomode/runtime && " +
+                        "touch /data/local/tmp/gomode/logs/access.jsonl && " +
+                        "chmod 755 /data/local/tmp/gomode /data/local/tmp/gomode/config /data/local/tmp/gomode/logs /data/local/tmp/gomode/runtime && " +
+                        "chmod 666 /data/local/tmp/gomode/logs/access.jsonl",
+                10
+            )
+
+            val daemonAlreadyInstalled = execRootCommand(
+                "test -x '$DAEMON_DATA_PATH' && echo YES || echo NO",
+                8
+            ).contains("YES")
+
             // Try to copy daemon binary from assets (may not exist)
             val daemonFile = File(context.filesDir, DAEMON_NAME)
             try {
@@ -211,22 +285,31 @@ class RootManager private constructor(private val context: Context) {
                 try { sourceLib.copyTo(hookLibFile, overwrite = true) } catch (e: Throwable) { }
             }
 
-            if (daemonFile.exists()) {
+            if (!daemonAlreadyInstalled && daemonFile.exists()) {
                 val cmd = "cp '${daemonFile.absolutePath}' '$DAEMON_DATA_PATH' && " +
                         "chmod 755 '$DAEMON_DATA_PATH'"
-                execRootCommand(cmd)
+                val result = execRootCommand(cmd, 12)
+                if (result.startsWith("Error:")) {
+                    return@withContext InstallResult(false, "Failed to copy daemon: $result")
+                }
             }
 
             if (hookLibFile.exists()) {
                 val cmd = "cp '${hookLibFile.absolutePath}' '$HOOK_LIB_DATA_PATH' && " +
                         "chmod 644 '$HOOK_LIB_DATA_PATH'"
-                execRootCommand(cmd)
+                execRootCommand(cmd, 10)
                 tryInstallToSystem(hookLibFile)
             }
 
             setupBootPersistence()
 
-            InstallResult(true, "Installation complete")
+            val daemonReady = execRootCommand("test -x '$DAEMON_DATA_PATH' && echo READY || echo MISSING", 8)
+                .contains("READY")
+            if (!daemonReady) {
+                InstallResult(false, "Daemon binary is missing after install step")
+            } else {
+                InstallResult(true, "Installation complete")
+            }
         } catch (e: Throwable) {
             Log.e(TAG, "Daemon installation failed", e)
             InstallResult(false, "Installation failed: ${e.message}")
@@ -238,16 +321,34 @@ class RootManager private constructor(private val context: Context) {
      */
     suspend fun startDaemon(): Boolean = withContext(Dispatchers.IO) {
         try {
-            val running = try { nativeLibLoaded && nativeIsDaemonRunning() } catch (e: Throwable) { false }
+            val running = isDaemonRunningSafe()
             if (running) return@withContext true
 
-            val daemonPath = if (File(DAEMON_DATA_PATH).exists()) DAEMON_DATA_PATH
-            else "${context.filesDir}/$DAEMON_NAME"
+            val daemonInstalled = execRootCommand(
+                "test -x '$DAEMON_DATA_PATH' && echo YES || echo NO",
+                8
+            ).contains("YES")
 
-            if (File(daemonPath).exists()) {
-                execRootCommand("$daemonPath &")
-                Thread.sleep(1000)
-                return@withContext try { nativeLibLoaded && nativeIsDaemonRunning() } catch (e: Throwable) { false }
+            val daemonPath = if (daemonInstalled) DAEMON_DATA_PATH else "${context.filesDir}/$DAEMON_NAME"
+            val daemonPathReady = if (daemonInstalled) {
+                true
+            } else {
+                File(daemonPath).exists()
+            }
+
+            if (daemonPathReady) {
+                execRootCommand(
+                    "mkdir -p /data/local/tmp/gomode/runtime 2>/dev/null; " +
+                            "nohup $daemonPath >/data/local/tmp/gomode/runtime/daemon.out 2>&1 &",
+                    10
+                )
+
+                repeat(8) {
+                    Thread.sleep(500)
+                    if (isDaemonRunningSafe()) return@withContext true
+                }
+
+                return@withContext isDaemonRunningSafe()
             }
             false
         } catch (e: Throwable) {
@@ -288,7 +389,7 @@ class RootManager private constructor(private val context: Context) {
      */
     suspend fun notifyConfigUpdate(packageName: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val running = try { nativeLibLoaded && nativeIsDaemonRunning() } catch (e: Throwable) { false }
+            val running = isDaemonRunningSafe()
             if (running && nativeLibLoaded) nativeSendConfig("RELOAD_CONFIG|$packageName")
             else false
         } catch (e: Throwable) {
@@ -316,22 +417,28 @@ class RootManager private constructor(private val context: Context) {
      */
     suspend fun getRealImei(): String = withContext(Dispatchers.IO) {
         try {
-            // Method 1: service call iphonesubinfo (most reliable on rooted devices)
-            val serviceResult = execRootCommand(
-                "service call iphonesubinfo 1 2>/dev/null | grep -oP \"'[0-9.]+'\" | tr -d \"'.\" | tr -d '\\n'"
-            ).trim()
-            if (serviceResult.matches(Regex("[0-9]{14,15}"))) return@withContext serviceResult
+            val numericRegex = Regex("\\b[0-9]{14,17}\\b")
 
-            // Method 2: telephony properties
+            // Method 1: cmd phone get-imei (Android 10+)
+            val cmdPhone = execRootCommand("cmd phone get-imei 0 2>/dev/null", 8)
+            numericRegex.find(cmdPhone)?.value?.let { return@withContext it.take(15) }
+
+            // Method 2: service call iphonesubinfo
+            val serviceResult = execRootCommand("service call iphonesubinfo 1 2>/dev/null", 8)
+            numericRegex.find(serviceResult)?.value?.let { return@withContext it.take(15) }
+
+            // Method 3: telephony properties
             for (prop in listOf("ril.imei1", "ril.imei", "gsm.imei", "ro.ril.imei", "persist.radio.device.imei")) {
-                val result = execRootCommand("getprop $prop 2>/dev/null").trim()
-                if (result.matches(Regex("[0-9]{14,15}"))) return@withContext result
+                val result = execRootCommand("getprop $prop 2>/dev/null", 6).trim()
+                if (result.matches(Regex("[0-9]{14,17}"))) return@withContext result.take(15)
             }
 
-            // Method 3: dumpsys iphonesubinfo
-            val dumpsys = execRootCommand("dumpsys iphonesubinfo 2>/dev/null | grep -i IMEI | head -2")
-            val imeiMatch = Regex("[0-9]{14,15}").find(dumpsys)
-            if (imeiMatch != null) return@withContext imeiMatch.value
+            // Method 4: dumpsys fallbacks
+            val dumpsys = execRootCommand("dumpsys iphonesubinfo 2>/dev/null", 10)
+            numericRegex.find(dumpsys)?.value?.let { return@withContext it.take(15) }
+
+            val telephonyDump = execRootCommand("dumpsys telephony.registry 2>/dev/null", 10)
+            numericRegex.find(telephonyDump)?.value?.let { return@withContext it.take(15) }
 
             ""
         } catch (e: Throwable) { "" }
@@ -757,20 +864,53 @@ class RootManager private constructor(private val context: Context) {
     }
 
     /** Read Xposed access logs written by GoModeXposedModule */
-    suspend fun getXposedAccessLogs(): List<Map<String, String>> = withContext(Dispatchers.IO) {
+    suspend fun getXposedAccessLogs(sinceTimestamp: Long = 0L): List<XposedAccessLog> = withContext(Dispatchers.IO) {
         try {
-            val logFile = java.io.File("/data/data/com.godmode.app/files/xposed_logs/access.jsonl")
-            if (!logFile.exists()) return@withContext emptyList()
+            val rawLogs = execRootCommand(
+                "tail -n 1200 /data/local/tmp/gomode/logs/access.jsonl 2>/dev/null || " +
+                        "tail -n 1200 /data/data/com.godmode.app/files/xposed_logs/access.jsonl 2>/dev/null",
+                10
+            )
+            if (rawLogs.isBlank() || rawLogs.startsWith("Error")) return@withContext emptyList()
+
             val gson = com.google.gson.Gson()
-            logFile.readLines()
-                .takeLast(500)
+            rawLogs.lineSequence()
                 .mapNotNull { line ->
+                    if (line.isBlank() || !line.trimStart().startsWith("{")) return@mapNotNull null
                     try {
                         @Suppress("UNCHECKED_CAST")
-                        gson.fromJson(line, Map::class.java) as Map<String, String>
-                    } catch (_: Throwable) { null }
+                        val map = gson.fromJson(line, Map::class.java) as Map<String, Any?>
+                        val pkg = (map["pkg"] as? String)?.trim().orEmpty()
+                        val type = (map["type"] as? String)?.trim().orEmpty()
+                        if (pkg.isBlank() || type.isBlank()) return@mapNotNull null
+
+                        val ts = when (val v = map["ts"]) {
+                            is Number -> v.toLong()
+                            is String -> v.toLongOrNull() ?: 0L
+                            else -> 0L
+                        }
+                        if (ts <= sinceTimestamp) return@mapNotNull null
+
+                        val spoofed = when (val s = map["spoofed"]) {
+                            is Boolean -> s
+                            is Number -> s.toInt() != 0
+                            is String -> s == "1" || s.equals("true", ignoreCase = true)
+                            else -> true
+                        }
+
+                        XposedAccessLog(
+                            packageName = pkg,
+                            propertyType = type,
+                            value = (map["value"] as? String).orEmpty(),
+                            timestamp = if (ts > 0) ts else System.currentTimeMillis(),
+                            wasSpoofed = spoofed
+                        )
+                    } catch (_: Throwable) {
+                        null
+                    }
                 }
-                .reversed()
+                .sortedBy { it.timestamp }
+                .toList()
         } catch (e: Throwable) { emptyList() }
     }
 

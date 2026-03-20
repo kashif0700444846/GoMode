@@ -266,6 +266,8 @@ class AppDetailActivity : AppCompatActivity() {
             repository.saveConfig(config)
             // Write to XSharedPreferences for Xposed module
             saveXposedPrefs(config)
+            val rootManager = (application as GodModeApp).rootManager
+            rootManager.notifyConfigUpdate(packageName)
             currentConfig = config
             Toast.makeText(this@AppDetailActivity, "Configuration saved - active hooks applied", Toast.LENGTH_SHORT).show()
         }
@@ -278,6 +280,8 @@ class AppDetailActivity : AppCompatActivity() {
             putBoolean("active", config.isActive)
             putInt("imei_mode", config.imeiMode)
             putString("imei_value", config.customImei)
+            putInt("imsi_mode", config.imsiMode)
+            putString("imsi_value", config.customImsi)
             putInt("android_id_mode", config.androidIdMode)
             putString("android_id_value", config.customAndroidId)
             putInt("serial_mode", config.serialMode)
@@ -287,6 +291,8 @@ class AppDetailActivity : AppCompatActivity() {
             putInt("build_mode", config.buildMode)
             putString("build_model", config.customModel)
             putString("build_brand", config.customBrand)
+            putString("build_fingerprint", config.customFingerprint)
+            putString("build_manufacturer", config.customBrand)
             putInt("location_mode", config.locationMode)
             putFloat("location_lat", config.customLat.toFloat())
             putFloat("location_lon", config.customLon.toFloat())
@@ -295,6 +301,8 @@ class AppDetailActivity : AppCompatActivity() {
             putInt("ad_id_mode", config.adIdMode)
             putString("ad_id_value", config.customAdId)
         }.apply()
+
+        saveRootReadableFallbackConfig(config)
 
         // Make prefs world-readable for XSharedPreferences (LSPosed will also handle this)
         lifecycleScope.launch {
@@ -320,6 +328,54 @@ class AppDetailActivity : AppCompatActivity() {
                 } else {
                     rootManager.grantPermission(packageName, "android.permission.RECORD_AUDIO")
                 }
+            }
+        }
+    }
+
+    private fun saveRootReadableFallbackConfig(config: AppConfig) {
+        lifecycleScope.launch {
+            try {
+                val rootManager = (application as GodModeApp).rootManager
+                val safePkg = config.packageName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                val configPath = "/data/local/tmp/gomode/config/$safePkg.conf"
+
+                val serialized = buildString {
+                    appendLine("active=${if (config.isActive) 1 else 0}")
+                    appendLine("imei_mode=${config.imeiMode}")
+                    appendLine("imei_value=${config.customImei}")
+                    appendLine("imsi_mode=${config.imsiMode}")
+                    appendLine("imsi_value=${config.customImsi}")
+                    appendLine("android_id_mode=${config.androidIdMode}")
+                    appendLine("android_id_value=${config.customAndroidId}")
+                    appendLine("serial_mode=${config.serialMode}")
+                    appendLine("serial_value=${config.customSerial}")
+                    appendLine("mac_mode=${config.macMode}")
+                    appendLine("mac_value=${config.customMac}")
+                    appendLine("build_mode=${config.buildMode}")
+                    appendLine("build_model=${config.customModel}")
+                    appendLine("build_brand=${config.customBrand}")
+                    appendLine("build_fingerprint=${config.customFingerprint}")
+                    appendLine("build_manufacturer=${config.customBrand}")
+                    appendLine("location_mode=${config.locationMode}")
+                    appendLine("location_lat=${config.customLat}")
+                    appendLine("location_lon=${config.customLon}")
+                    appendLine("block_camera=${if (config.blockCamera) 1 else 0}")
+                    appendLine("block_mic=${if (config.blockMicrophone) 1 else 0}")
+                    appendLine("ad_id_mode=${config.adIdMode}")
+                    appendLine("ad_id_value=${config.customAdId}")
+                }
+
+                val escaped = serialized
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("$", "\\$")
+
+                rootManager.execRootCommand(
+                    "mkdir -p /data/local/tmp/gomode/config && " +
+                            "printf \"$escaped\" > '$configPath' && chmod 644 '$configPath'",
+                    10
+                )
+            } catch (_: Throwable) {
             }
         }
     }

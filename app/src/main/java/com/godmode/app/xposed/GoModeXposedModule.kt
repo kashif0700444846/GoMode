@@ -21,7 +21,9 @@ class GoModeXposedModule : IXposedHookLoadPackage {
     companion object {
         private const val TAG = "GoMode_Xposed"
         private const val MODULE_PKG = "com.godmode.app"
-        private const val LOG_DIR = "/data/data/com.godmode.app/files/xposed_logs"
+        private const val LOG_DIR_PRIMARY = "/data/local/tmp/gomode/logs"
+        private const val LOG_DIR_LEGACY = "/data/data/com.godmode.app/files/xposed_logs"
+        private const val CONFIG_DIR_FALLBACK = "/data/local/tmp/gomode/config"
 
         // Modes: 0=disabled, 1=custom value, 2=random
         const val MODE_DISABLED = 0
@@ -29,11 +31,86 @@ class GoModeXposedModule : IXposedHookLoadPackage {
         const val MODE_RANDOM = 2
         const val MODE_EMPTY = 3
 
-        private fun loadPrefs(packageName: String): XSharedPreferences? {
+        private class ConfigAccessor(
+            private val xPrefs: XSharedPreferences?,
+            private val fallback: Map<String, String>
+        ) {
+            fun getBoolean(key: String, default: Boolean): Boolean {
+                xPrefs?.let {
+                    try {
+                        return it.getBoolean(key, fallbackBoolean(key, default))
+                    } catch (_: Throwable) {
+                    }
+                }
+                return fallbackBoolean(key, default)
+            }
+
+            fun getInt(key: String, default: Int): Int {
+                xPrefs?.let {
+                    try {
+                        return it.getInt(key, fallbackInt(key, default))
+                    } catch (_: Throwable) {
+                    }
+                }
+                return fallbackInt(key, default)
+            }
+
+            fun getString(key: String, default: String): String {
+                xPrefs?.let {
+                    try {
+                        return it.getString(key, fallback[key] ?: default) ?: (fallback[key] ?: default)
+                    } catch (_: Throwable) {
+                    }
+                }
+                return fallback[key] ?: default
+            }
+
+            private fun fallbackBoolean(key: String, default: Boolean): Boolean {
+                val raw = fallback[key] ?: return default
+                return raw == "1" || raw.equals("true", ignoreCase = true)
+            }
+
+            private fun fallbackInt(key: String, default: Int): Int {
+                return fallback[key]?.toIntOrNull() ?: default
+            }
+        }
+
+        private fun loadFallbackPrefs(packageName: String): Map<String, String> {
+            return try {
+                val file = File("$CONFIG_DIR_FALLBACK/$packageName.conf")
+                if (!file.exists()) return emptyMap()
+
+                file.readLines()
+                    .mapNotNull { line ->
+                        if (!line.contains("=")) return@mapNotNull null
+                        val parts = line.split("=", limit = 2)
+                        if (parts[0].isBlank()) null else parts[0].trim() to parts.getOrElse(1) { "" }.trim()
+                    }
+                    .toMap()
+            } catch (_: Throwable) {
+                emptyMap()
+            }
+        }
+
+        private fun loadPrefs(packageName: String): ConfigAccessor? {
             return try {
                 val prefs = XSharedPreferences(MODULE_PKG, "xposed_$packageName")
-                if (!prefs.getBoolean("active", false)) return null
-                prefs
+                try {
+                    prefs.makeWorldReadable()
+                } catch (_: Throwable) {
+                }
+                try {
+                    prefs.reload()
+                } catch (_: Throwable) {
+                }
+
+                val fallback = loadFallbackPrefs(packageName)
+                val activeFromXposed = try { prefs.getBoolean("active", false) } catch (_: Throwable) { false }
+                val fallbackActiveRaw = fallback["active"] ?: ""
+                val activeFromFallback = fallbackActiveRaw == "1" || fallbackActiveRaw.equals("true", ignoreCase = true)
+
+                if (!activeFromXposed && !activeFromFallback) return null
+                ConfigAccessor(if (activeFromXposed) prefs else null, fallback)
             } catch (e: Throwable) {
                 Log.e(TAG, "Failed to load prefs for $packageName: ${e.message}")
                 null
@@ -96,14 +173,18 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== TELEPHONY (IMEI/IMSI/Phone) =====
 
-    private fun hookTelephony(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookTelephony(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val imeiMode = prefs.getInt("imei_mode", MODE_DISABLED)
         if (imeiMode == MODE_DISABLED) return
 
         val cachedImei = when (imeiMode) {
-            MODE_CUSTOM -> prefs.getString("imei_value", "") ?: ""
+            MODE_CUSTOM -> {
+                val custom = prefs.getString("imei_value", "")
+                if (custom.matches(Regex("[0-9]{14,17}"))) custom.take(15) else randomImei()
+            }
             MODE_RANDOM -> randomImei()
-            else -> ""
+            MODE_EMPTY -> "000000000000000"
+            else -> randomImei()
         }
 
         val imeiHook = object : XC_MethodHook() {
@@ -133,8 +214,10 @@ class GoModeXposedModule : IXposedHookLoadPackage {
         // IMSI (getSubscriberId)
         val imsiMode = prefs.getInt("imsi_mode", MODE_DISABLED)
         if (imsiMode != MODE_DISABLED) {
-            val imsiVal = if (imsiMode == MODE_CUSTOM) prefs.getString("imsi_value", "000000000000000") ?: "000000000000000"
-            else "000000000000000"
+            val imsiVal = if (imsiMode == MODE_CUSTOM) {
+                val custom = prefs.getString("imsi_value", "")
+                if (custom.matches(Regex("[0-9]{14,17}"))) custom.take(15) else "000000000000000"
+            } else "000000000000000"
             try {
                 XposedHelpers.findAndHookMethod(
                     "android.telephony.TelephonyManager",
@@ -152,7 +235,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
         // Phone number
         val phoneMode = prefs.getInt("phone_mode", MODE_DISABLED)
         if (phoneMode != MODE_DISABLED) {
-            val phoneVal = if (phoneMode == MODE_CUSTOM) prefs.getString("phone_value", "") ?: "" else ""
+            val phoneVal = if (phoneMode == MODE_CUSTOM) prefs.getString("phone_value", "") else ""
             try {
                 XposedHelpers.findAndHookMethod(
                     "android.telephony.TelephonyManager",
@@ -169,12 +252,12 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== ANDROID ID =====
 
-    private fun hookAndroidId(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookAndroidId(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val mode = prefs.getInt("android_id_mode", MODE_DISABLED)
         if (mode == MODE_DISABLED) return
 
         val idValue = when (mode) {
-            MODE_CUSTOM -> prefs.getString("android_id_value", "") ?: ""
+            MODE_CUSTOM -> prefs.getString("android_id_value", "")
             MODE_RANDOM -> randomAndroidId()
             else -> "0000000000000000"
         }
@@ -200,7 +283,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== BUILD PROPS (Serial, Model, Brand, Fingerprint) =====
 
-    private fun hookBuildProps(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookBuildProps(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val buildMode = prefs.getInt("build_mode", MODE_DISABLED)
         val serialMode = prefs.getInt("serial_mode", MODE_DISABLED)
 
@@ -209,7 +292,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
         try {
             if (serialMode != MODE_DISABLED) {
                 val serial = when (serialMode) {
-                    MODE_CUSTOM -> prefs.getString("serial_value", "unknown") ?: "unknown"
+                    MODE_CUSTOM -> prefs.getString("serial_value", "unknown")
                     MODE_RANDOM -> randomSerial()
                     else -> "unknown"
                 }
@@ -218,10 +301,10 @@ class GoModeXposedModule : IXposedHookLoadPackage {
             }
 
             if (buildMode != MODE_DISABLED) {
-                val model = prefs.getString("build_model", "") ?: ""
-                val brand = prefs.getString("build_brand", "") ?: ""
-                val fingerprint = prefs.getString("build_fingerprint", "") ?: ""
-                val manufacturer = prefs.getString("build_manufacturer", "") ?: ""
+                val model = prefs.getString("build_model", "")
+                val brand = prefs.getString("build_brand", "")
+                val fingerprint = prefs.getString("build_fingerprint", "")
+                val manufacturer = prefs.getString("build_manufacturer", "")
 
                 if (model.isNotEmpty()) XposedHelpers.setStaticObjectField(android.os.Build::class.java, "MODEL", model)
                 if (brand.isNotEmpty()) {
@@ -237,12 +320,12 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== MAC ADDRESS =====
 
-    private fun hookWifiMac(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookWifiMac(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val mode = prefs.getInt("mac_mode", MODE_DISABLED)
         if (mode == MODE_DISABLED) return
 
         val mac = when (mode) {
-            MODE_CUSTOM -> prefs.getString("mac_value", "") ?: ""
+            MODE_CUSTOM -> prefs.getString("mac_value", "")
             MODE_RANDOM -> randomMac()
             else -> "02:00:00:00:00:00"
         }
@@ -273,12 +356,12 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== WIDEVINE DRM ID =====
 
-    private fun hookMediaDrm(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookMediaDrm(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val mode = prefs.getInt("drm_mode", MODE_DISABLED)
         if (mode == MODE_DISABLED) return
 
         val drmBytes: ByteArray = if (mode == MODE_CUSTOM) {
-            val hex = prefs.getString("drm_value", "") ?: ""
+            val hex = prefs.getString("drm_value", "")
             if (hex.length >= 32) hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
             else ByteArray(16) { (Math.random() * 256).toInt().toByte() }
         } else {
@@ -303,7 +386,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== GPS / LOCATION =====
 
-    private fun hookLocation(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookLocation(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val mode = prefs.getInt("location_mode", MODE_DISABLED)
         if (mode == MODE_DISABLED) return
 
@@ -328,7 +411,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== CAMERA BLOCK =====
 
-    private fun hookCamera(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookCamera(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         if (!prefs.getBoolean("block_camera", false)) return
 
         val hook = object : XC_MethodHook() {
@@ -345,7 +428,7 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== MICROPHONE BLOCK =====
 
-    private fun hookMicrophone(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookMicrophone(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         if (!prefs.getBoolean("block_mic", false)) return
 
         val hook = object : XC_MethodHook() {
@@ -361,12 +444,12 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== GOOGLE PLAY SERVICES ADVERTISING ID =====
 
-    private fun hookPlayServices(lpparam: XC_LoadPackage.LoadPackageParam, prefs: XSharedPreferences) {
+    private fun hookPlayServices(lpparam: XC_LoadPackage.LoadPackageParam, prefs: ConfigAccessor) {
         val mode = prefs.getInt("ad_id_mode", MODE_DISABLED)
         if (mode == MODE_DISABLED) return
 
         val adIdValue = when (mode) {
-            MODE_CUSTOM -> prefs.getString("ad_id_value", "") ?: ""
+            MODE_CUSTOM -> prefs.getString("ad_id_value", "")
             MODE_RANDOM -> randomAndroidId()
             else -> "00000000-0000-0000-0000-000000000000"
         }
@@ -388,20 +471,39 @@ class GoModeXposedModule : IXposedHookLoadPackage {
 
     // ===== LOGGING =====
 
-    private fun logAccess(packageName: String, type: String, value: String) {
+    private fun appendLogToFile(directoryPath: String, entry: String) {
         try {
-            val dir = File(LOG_DIR)
+            val dir = File(directoryPath)
             if (!dir.exists()) dir.mkdirs()
             val logFile = File(dir, "access.jsonl")
+            logFile.appendText(entry)
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun logAccess(packageName: String, type: String, value: String, spoofed: Boolean = true) {
+        try {
+            val ts = System.currentTimeMillis()
+            val safeValue = value
+                .replace("\"", "'")
+                .replace("\n", " ")
+                .replace("\r", " ")
+
             val entry = buildString {
                 append("{")
                 append("\"pkg\":\"$packageName\",")
                 append("\"type\":\"$type\",")
-                append("\"value\":\"${value.replace("\"", "'")}\",")
-                append("\"ts\":${System.currentTimeMillis()}")
+                append("\"value\":\"$safeValue\",")
+                append("\"spoofed\":${if (spoofed) 1 else 0},")
+                append("\"ts\":$ts")
                 append("}\n")
             }
-            logFile.appendText(entry)
-        } catch (_: Throwable) {}
+
+            appendLogToFile(LOG_DIR_PRIMARY, entry)
+            appendLogToFile(LOG_DIR_LEGACY, entry)
+
+            Log.i(TAG, "GOMODE_LOG|$packageName|$type|$safeValue|$ts")
+        } catch (_: Throwable) {
+        }
     }
 }

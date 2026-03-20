@@ -47,6 +47,16 @@ Into a single user-friendly application. The app should:
 
 ## Implemented Features
 
+### v5 (2026-03-20) - P0 Stability Pass (Install Hang + Spoofing + Logs)
+- Reworked root command execution to timeout-safe Kotlin process handling (prevents indefinite `su` hangs).
+- Added startup/setup timeouts in `MainActivity` and `SetupWizardActivity` to avoid getting stuck on install screens.
+- Hardened daemon lifecycle checks (`socket + pidof`) and startup routine (`nohup`, runtime logs, install verification).
+- Added shared root-readable config pipeline for Xposed (`/data/local/tmp/gomode/config/<pkg>.conf`) so spoof settings still load if `XSharedPreferences` path is inaccessible.
+- Expanded config export from `AppDetailActivity` (IMEI/IMSI/build/location/ad id keys) and immediate config reload signaling.
+- Added Xposed log pipeline to root-readable path (`/data/local/tmp/gomode/logs/access.jsonl`) with structured JSON entries.
+- Implemented ingestion of Xposed logs into Room via `GodModeDaemonService`, with timestamp checkpointing.
+- Improved IMEI read fallbacks (`cmd phone`, `service call iphonesubinfo`, `dumpsys`, `getprop`).
+
 ### v3 (2026-03-20) - Crash Fix + Module Manager
 - Fixed P0 startup crash (Throwable handling)
 - Module Manager with KernelSU/LSPosed/Zygisk/XPL-EX tabs
@@ -104,8 +114,10 @@ Into a single user-friendly application. The app should:
 ## Prioritized Backlog
 
 ### P0 (Critical - user to test)
-- User must enable GoMode in LSPosed Manager after installing APK
-- User should reboot after enabling for hooks to take effect
+- Verify v5 setup no longer hangs on "Installing daemon" (fresh install + after reboot)
+- Verify IMEI spoof is applied in at least one target app scope (KernelSU + LSPosed)
+- Verify access logs appear in Logs tab after target app reads IMEI/Android ID/location
+- Confirm fallback config path works (`/data/local/tmp/gomode/config/*.conf`)
 
 ### P1 (Next Implementation)
 - Network traffic inspector (ProxyPin-like): intercept HTTP/HTTPS

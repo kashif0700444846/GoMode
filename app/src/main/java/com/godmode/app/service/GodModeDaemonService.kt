@@ -14,8 +14,7 @@ import com.godmode.app.data.db.GodModeDatabase
 import com.godmode.app.data.model.AccessLog
 import com.godmode.app.ui.MainActivity
 import kotlinx.coroutines.*
-import java.net.ServerSocket
-import java.net.Socket
+import java.util.Locale
 
 /**
  * Foreground service that maintains connection to the native daemon
@@ -36,11 +35,14 @@ class GodModeDaemonService : Service() {
     private var logListenerJob: Job? = null
     private lateinit var rootManager: RootManager
     private lateinit var database: GodModeDatabase
+    private var lastXposedLogTs: Long = 0L
 
     override fun onCreate() {
         super.onCreate()
         rootManager = RootManager.getInstance(this)
         database = GodModeDatabase.getDatabase(this)
+        lastXposedLogTs = getSharedPreferences("gomode_logs", MODE_PRIVATE)
+            .getLong("last_xposed_ts", 0L)
         Log.i(TAG, "GodMode service created")
     }
 
@@ -66,6 +68,10 @@ class GodModeDaemonService : Service() {
         super.onDestroy()
         isRunning = false
         logListenerJob?.cancel()
+        getSharedPreferences("gomode_logs", MODE_PRIVATE)
+            .edit()
+            .putLong("last_xposed_ts", lastXposedLogTs)
+            .apply()
         serviceScope.cancel()
         Log.i(TAG, "GodMode service destroyed")
     }
@@ -82,11 +88,49 @@ class GodModeDaemonService : Service() {
                             processRawLogs(rawLogs)
                         }
                     }
+
+                    processXposedLogs()
                 } catch (e: Throwable) {
                     Log.e(TAG, "Error polling logs", e)
                 }
                 delay(2000)
             }
+        }
+    }
+
+    private suspend fun processXposedLogs() {
+        val xposedLogs = rootManager.getXposedAccessLogs(lastXposedLogTs)
+        if (xposedLogs.isEmpty()) return
+
+        val logsToInsert = xposedLogs.map { log ->
+            AccessLog(
+                packageName = log.packageName,
+                timestamp = log.timestamp,
+                propertyType = normalizePropertyType(log.propertyType),
+                propertyCategory = AccessLog.categoryForType(normalizePropertyType(log.propertyType)),
+                originalValue = "",
+                spoofedValue = log.value,
+                wasSpoofed = log.wasSpoofed
+            )
+        }
+
+        database.accessLogDao().insertAll(logsToInsert)
+        lastXposedLogTs = xposedLogs.maxOfOrNull { it.timestamp } ?: lastXposedLogTs
+    }
+
+    private fun normalizePropertyType(type: String): String {
+        return when (type.uppercase(Locale.US)) {
+            "IMEI", "MEID", "DEVICE_ID" -> AccessLog.TYPE_IMEI
+            "IMSI" -> AccessLog.TYPE_IMSI
+            "ANDROID_ID" -> AccessLog.TYPE_ANDROID_ID
+            "SERIAL" -> AccessLog.TYPE_SERIAL
+            "LOCATION" -> AccessLog.TYPE_LOCATION_GPS
+            "MAC_ADDRESS", "MAC" -> AccessLog.TYPE_MAC_ADDRESS
+            "CAMERA_BLOCKED", "CAMERA" -> AccessLog.TYPE_CAMERA
+            "MIC_BLOCKED", "MICROPHONE" -> AccessLog.TYPE_MICROPHONE
+            "AD_ID", "ADVERTISING_ID" -> AccessLog.TYPE_ADVERTISING_ID
+            "DRM_ID" -> AccessLog.TYPE_BUILD_PROPS
+            else -> type.ifBlank { "UNKNOWN" }
         }
     }
 
