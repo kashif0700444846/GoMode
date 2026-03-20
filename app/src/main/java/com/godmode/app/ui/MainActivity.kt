@@ -26,7 +26,9 @@ import com.godmode.app.ui.dashboard.DashboardViewModelFactory
 import com.godmode.app.data.db.GodModeDatabase
 import com.godmode.app.data.repository.GodModeRepository
 import com.godmode.app.ui.setup.SetupWizardActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -122,14 +124,14 @@ class MainActivity : AppCompatActivity() {
             try {
                 val rootManager = (application as GodModeApp).rootManager
                 // Non-blocking: check root in background, never block UI
-                val rootGranted = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val rootGranted = withContext(Dispatchers.IO) {
                     try { rootManager.requestRoot() } catch (e: Throwable) { false }
                 }
                 if (rootGranted) {
                     // Silently try daemon init in background - don't block UI
-                    withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        try { rootManager.installDaemon() } catch (_: Throwable) {}
-                        try { rootManager.startDaemon() } catch (_: Throwable) {}
+                    withContext(Dispatchers.IO) {
+                        try { rootManager.installDaemon() } catch (e: Throwable) {}
+                        try { rootManager.startDaemon() } catch (e: Throwable) {}
                     }
                     try { startDaemonService() } catch (_: Throwable) {}
                 }
