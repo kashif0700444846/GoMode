@@ -66,6 +66,36 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+
+}
+
+android.applicationVariants.all { variant ->
+    def taskName = "copyDaemonToAssets${variant.name.capitalize()}"
+    tasks.register(taskName) {
+        dependsOn "externalNativeBuild${variant.name.capitalize()}"
+        doLast {
+            def cmakeDir = new File(buildDir, "intermediates/cmake/${variant.name}/obj")
+            def assetsDir = new File(projectDir, "src/main/assets")
+            if (!assetsDir.exists()) assetsDir.mkdirs()
+
+            // Find godmoded in any of the ABI directories
+            if (cmakeDir.exists()) {
+                cmakeDir.eachDir { abiDir ->
+                    def daemon = new File(abiDir, "godmoded")
+                    if (daemon.exists()) {
+                        copy {
+                            from daemon
+                            into assetsDir
+                        }
+                        println "Copied godmoded from ${abiDir.name} to assets"
+                    }
+                }
+            }
+        }
+    }
+    variant.mergeAssetsProvider.configure {
+        dependsOn taskName
+    }
 }
 
 dependencies {

@@ -13,6 +13,8 @@
 #include "config_manager.h"
 #include "../ipc/socket_server.h"
 #include <android/log.h>
+#include <set>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -308,7 +310,7 @@ void config_manager_send_app_list(int client_fd) {
 
     // Also add packages from log buffer
     for (int i = 0; i < g_log_count; i++) {
-        packages.insert(g_log_buffer[i].package);
+        packages.insert(std::string(g_log_buffer[i].package));
     }
 
     for (const auto& pkg : packages) {

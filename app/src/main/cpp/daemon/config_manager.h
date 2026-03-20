@@ -1,8 +1,10 @@
 #pragma once
 #include <stdbool.h>
 #include <stddef.h>
-#include <set>
-#include <string>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bool config_manager_init(const char* db_path);
 void config_manager_store_log(const char* log_msg);
@@ -12,3 +14,7 @@ void config_manager_send_logs(int client_fd, const char* package);
 void config_manager_clear_logs(const char* package);
 void config_manager_send_app_list(int client_fd);
 void config_manager_cleanup();
+
+#ifdef __cplusplus
+}
+#endif
