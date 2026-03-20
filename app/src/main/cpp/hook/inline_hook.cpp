@@ -25,6 +25,7 @@ static const uint8_t TRAMPOLINE_TEMPLATE[] = {
     0x00, 0x00, 0x00, 0x00   // address high 32 bits
 };
 #define TRAMPOLINE_SIZE 16
+#define TRAMPOLINE_ALLOC_SIZE 128
 
 // Saved hooks list
 #define MAX_HOOKS 256
@@ -33,7 +34,6 @@ static int g_hook_count = 0;
 
 static bool make_writable(void* addr, size_t size) {
     uintptr_t page_start = (uintptr_t)addr & ~(getpagesize() - 1);
-    size_t page_size = getpagesize();
     size_t total = size + ((uintptr_t)addr - page_start);
     if (mprotect((void*)page_start, total, PROT_READ | PROT_WRITE | PROT_EXEC) != 0) {
         LOGE("mprotect failed: %s", strerror(errno));
@@ -44,7 +44,6 @@ static bool make_writable(void* addr, size_t size) {
 
 static bool make_executable(void* addr, size_t size) {
     uintptr_t page_start = (uintptr_t)addr & ~(getpagesize() - 1);
-    size_t page_size = getpagesize();
     size_t total = size + ((uintptr_t)addr - page_start);
     if (mprotect((void*)page_start, total, PROT_READ | PROT_EXEC) != 0) {
         LOGE("mprotect restore failed: %s", strerror(errno));
@@ -68,12 +67,12 @@ bool inline_hook_install(void* target, void* replacement, void** original) {
     entry.target = target;
     entry.replacement = replacement;
 
-    // Save original bytes (16 bytes for trampoline)
+    // Save original bytes (enough for trampoline)
     memcpy(entry.original_bytes, target, TRAMPOLINE_SIZE);
 
     // Allocate trampoline for original function execution
     // The trampoline will execute the original bytes then jump back
-    entry.trampoline = mmap(nullptr, 64, PROT_READ | PROT_WRITE | PROT_EXEC,
+    entry.trampoline = mmap(nullptr, TRAMPOLINE_ALLOC_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC,
                             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (entry.trampoline == MAP_FAILED) {
         LOGE("mmap trampoline failed: %s", strerror(errno));
@@ -90,7 +89,7 @@ bool inline_hook_install(void* target, void* replacement, void** original) {
     memcpy(tramp + 8, &ret_addr, 8);
 
     // Flush instruction cache for trampoline
-    __builtin___clear_cache(entry.trampoline, (uint8_t*)entry.trampoline + 64);
+    __builtin___clear_cache(entry.trampoline, (uint8_t*)entry.trampoline + TRAMPOLINE_ALLOC_SIZE);
 
     if (original) {
         *original = entry.trampoline;
@@ -98,7 +97,7 @@ bool inline_hook_install(void* target, void* replacement, void** original) {
 
     // Patch target function with branch to replacement
     if (!make_writable(target, TRAMPOLINE_SIZE)) {
-        munmap(entry.trampoline, 64);
+        munmap(entry.trampoline, TRAMPOLINE_ALLOC_SIZE);
         return false;
     }
 
@@ -127,7 +126,7 @@ bool inline_hook_remove(void* target) {
             memcpy(target, g_hooks[i].original_bytes, TRAMPOLINE_SIZE);
             __builtin___clear_cache(target, (uint8_t*)target + TRAMPOLINE_SIZE);
             make_executable(target, TRAMPOLINE_SIZE);
-            munmap(g_hooks[i].trampoline, 64);
+            munmap(g_hooks[i].trampoline, TRAMPOLINE_ALLOC_SIZE);
             g_hooks[i].active = false;
             LOGI("Hook removed: %p", target);
             return true;

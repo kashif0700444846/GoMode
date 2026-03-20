@@ -90,6 +90,15 @@ static void on_ipc_message(int client_fd, const char* message) {
             injector_inject_process(pid);
         }
 
+    } else if (strncmp(message, "RELOAD_CONFIG|", 14) == 0) {
+        // Broadcast reload to all clients for this package
+        const char* pkg = message + 14;
+        char config[4096] = {0};
+        config_manager_get_config(pkg, config, sizeof(config));
+        char broadcast[4096];
+        snprintf(broadcast, sizeof(broadcast), "CONFIG|%s", config);
+        socket_server_broadcast(broadcast);
+
     } else if (strncmp(message, "SHUTDOWN", 8) == 0) {
         LOGI("Shutdown requested");
         g_running = false;
