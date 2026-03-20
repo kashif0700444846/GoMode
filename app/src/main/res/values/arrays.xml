@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="spoof_modes">
+        <item>Disabled (Real Value)</item>
+        <item>Random (New each session)</item>
+        <item>Custom (Fixed value)</item>
+        <item>Block (Return null/empty)</item>
+    </string-array>
+</resources>

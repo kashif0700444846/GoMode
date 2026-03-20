@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary_dark">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:titleTextColor="@color/text_primary"
+            app:subtitleTextColor="@color/text_secondary" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Master Switch -->
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Enable GodMode for this app" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold"/>
+                    <Switch android:id="@+id/switch_active" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Quick Actions -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+                <Button android:id="@+id/btn_randomize_all" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" android:text="Randomize All" style="@style/GodMode.Button"/>
+                <Button android:id="@+id/btn_view_logs" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="View Logs" style="@style/GodMode.Button.Outlined"/>
+            </LinearLayout>
+
+            <!-- TELEPHONY -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TELEPHONY &amp; SIM" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IMEI" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_imei_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom IMEI (15 digits)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_imei" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:maxLength="15" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Phone Number" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_phone_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom phone number">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_phone" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="phone" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Network Operator (MCC+MNC)" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_operator_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="MCC+MNC (e.g. 310260)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_mcc_mnc" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- DEVICE IDENTIFIERS -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DEVICE IDENTIFIERS" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Android ID" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_android_id_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom Android ID (16 hex chars)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_android_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLength="16" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Serial Number" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_serial_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom serial number">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_serial" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Advertising ID" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_ad_id_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom Ad ID (UUID format)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_ad_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- LOCATION -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="LOCATION" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <Spinner android:id="@+id/spinner_location_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" style="@style/GodMode.TextInputLayout" app:hint="Latitude">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_lat" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal|numberSigned" android:textColor="@color/text_primary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" style="@style/GodMode.TextInputLayout" app:hint="Longitude">
+                            <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_lon" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberDecimal|numberSigned" android:textColor="@color/text_primary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- NETWORK -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="NETWORK" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IP Address" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_ip_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom IP (e.g. 10.0.0.1)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_ip" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MAC Address" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginBottom="4dp"/>
+                    <Spinner android:id="@+id/spinner_mac_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Custom MAC (AA:BB:CC:DD:EE:FF)">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_mac" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- BUILD PROPERTIES -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="BUILD PROPERTIES" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <Spinner android:id="@+id/spinner_build_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:entries="@array/spoof_modes" android:background="@color/bg_card_elevated" android:layout_marginBottom="8dp"/>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" style="@style/GodMode.TextInputLayout" app:hint="Device Model">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_model" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/GodMode.TextInputLayout" app:hint="Brand">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/et_custom_brand" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ACCESS CONTROL -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ACCESS CONTROL" android:textColor="@color/text_hint" android:textSize="11sp" android:letterSpacing="0.1" android:layout_marginBottom="8dp"/>
+
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" style="@style/GodMode.CardView">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Camera" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_camera" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Microphone" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_mic" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Contacts" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_contacts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Calendar" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_calendar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Clipboard" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_clipboard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical"><TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Block Sensors" android:textColor="@color/text_primary" android:textSize="13sp"/><Switch android:id="@+id/switch_block_sensors" android:layout_width="wrap_content" android:layout_height="wrap_content" android:thumbTint="@color/accent" android:trackTint="@color/divider"/></LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Action Buttons -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <Button android:id="@+id/btn_save" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" android:text="Save" style="@style/GodMode.Button"/>
+                <Button android:id="@+id/btn_clear_logs" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Clear Logs" style="@style/GodMode.Button.Outlined"/>
+            </LinearLayout>
+            <Button android:id="@+id/btn_delete" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="80dp" android:text="Delete Configuration" android:backgroundTint="@color/red_danger" style="@style/GodMode.Button"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

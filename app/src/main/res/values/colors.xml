@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary palette -->
+    <color name="primary">#0F0F1A</color>
+    <color name="primary_dark">#080810</color>
+    <color name="primary_variant">#1A1A2E</color>
+
+    <!-- Accent / highlight -->
+    <color name="accent">#E94560</color>
+    <color name="accent_light">#FF6B81</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_dark">#0A0A14</color>
+    <color name="bg_card">#12121E</color>
+    <color name="bg_card_elevated">#1C1C2E</color>
+    <color name="nav_bg">#0D0D1A</color>
+    <color name="chip_bg">#1A1A2E</color>
+
+    <!-- Text -->
+    <color name="text_primary">#E8E8F0</color>
+    <color name="text_secondary">#A0A0C0</color>
+    <color name="text_hint">#606080</color>
+
+    <!-- Status colors -->
+    <color name="green_success">#00E676</color>
+    <color name="orange_warning">#FF9100</color>
+    <color name="red_danger">#FF1744</color>
+    <color name="blue_info">#40C4FF</color>
+
+    <!-- Log row backgrounds -->
+    <color name="log_normal_bg">#0D0D1A</color>
+    <color name="log_spoofed_bg">#0A1A0A</color>
+    <color name="log_sensitive_bg">#1A0A0A</color>
+
+    <!-- Divider -->
+    <color name="divider">#1E1E30</color>
+</resources>

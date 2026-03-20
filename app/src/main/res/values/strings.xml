@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GodMode</string>
+    <string name="app_description">Privacy Monitor &amp; Spoof Engine</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_apps">Apps</string>
+    <string name="nav_logs">Logs</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Dashboard -->
+    <string name="root_status">Root Status</string>
+    <string name="daemon_status">Daemon Status</string>
+    <string name="daemon_running">Running</string>
+    <string name="daemon_stopped">Stopped</string>
+    <string name="start_daemon">Start Daemon</string>
+    <string name="stop_daemon">Stop Daemon</string>
+    <string name="total_accesses">Total Accesses</string>
+    <string name="spoofed_count">Spoofed</string>
+    <string name="protected_apps">Protected Apps</string>
+    <string name="recent_activity">Recent Activity</string>
+    <string name="no_activity">No activity recorded yet</string>
+
+    <!-- Root Tools -->
+    <string name="magisk">Magisk</string>
+    <string name="kernelsu">KernelSU</string>
+    <string name="lsposed">LSPosed</string>
+    <string name="detected">Detected</string>
+    <string name="not_found">Not Found</string>
+
+    <!-- Device Info -->
+    <string name="device_info">Device Information</string>
+    <string name="imei">IMEI</string>
+    <string name="android_id">Android ID</string>
+    <string name="serial_number">Serial Number</string>
+    <string name="ip_address">IP Address</string>
+    <string name="mac_address">MAC Address</string>
+    <string name="device_model">Device Model</string>
+    <string name="device_brand">Brand</string>
+    <string name="build_fingerprint">Build Fingerprint</string>
+    <string name="sim_operator">SIM Operator</string>
+
+    <!-- Spoof Modes -->
+    <string name="mode_disabled">Disabled</string>
+    <string name="mode_custom">Custom Value</string>
+    <string name="mode_random">Randomize</string>
+    <string name="mode_empty">Empty/Null</string>
+
+    <!-- Spoof Categories -->
+    <string name="spoof_telephony">Telephony &amp; SIM</string>
+    <string name="spoof_location">Location</string>
+    <string name="spoof_network">Network</string>
+    <string name="spoof_device_id">Device Identifiers</string>
+    <string name="spoof_build">Build Properties</string>
+    <string name="spoof_access_control">Access Control</string>
+
+    <!-- Spoof Fields -->
+    <string name="imei_spoof">IMEI Spoofing</string>
+    <string name="imsi_spoof">IMSI Spoofing</string>
+    <string name="android_id_spoof">Android ID Spoofing</string>
+    <string name="serial_spoof">Serial Number Spoofing</string>
+    <string name="location_spoof">Location Spoofing</string>
+    <string name="ip_spoof">IP Address Spoofing</string>
+    <string name="mac_spoof">MAC Address Spoofing</string>
+    <string name="phone_spoof">Phone Number Spoofing</string>
+    <string name="build_spoof">Build Properties Spoofing</string>
+    <string name="operator_spoof">Network Operator Spoofing</string>
+    <string name="adid_spoof">Advertising ID Spoofing</string>
+
+    <!-- Access Control -->
+    <string name="block_camera">Block Camera Access</string>
+    <string name="block_microphone">Block Microphone Access</string>
+    <string name="block_contacts">Block Contacts Access</string>
+    <string name="block_calendar">Block Calendar Access</string>
+    <string name="block_clipboard">Block Clipboard Access</string>
+    <string name="block_sensors">Block Sensor Access</string>
+
+    <!-- Log Types -->
+    <string name="log_all">All</string>
+    <string name="log_spoofed">Spoofed Only</string>
+    <string name="log_location">Location</string>
+    <string name="log_imei">IMEI</string>
+    <string name="log_network">Network</string>
+    <string name="log_camera">Camera</string>
+
+    <!-- Buttons -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete Config</string>
+    <string name="randomize_all">Randomize All</string>
+    <string name="view_logs">View Access Logs</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="export_logs">Export</string>
+    <string name="refresh">Refresh</string>
+    <string name="copy">Copy</string>
+
+    <!-- Placeholders -->
+    <string name="enter_custom_imei">Enter 15-digit IMEI</string>
+    <string name="enter_custom_android_id">Enter 16-char hex Android ID</string>
+    <string name="enter_custom_ip">e.g., 192.168.1.100</string>
+    <string name="enter_custom_mac">e.g., AA:BB:CC:DD:EE:FF</string>
+    <string name="enter_latitude">Latitude (-90 to 90)</string>
+    <string name="enter_longitude">Longitude (-180 to 180)</string>
+    <string name="enter_custom_model">Device model name</string>
+    <string name="enter_custom_brand">Brand name</string>
+    <string name="enter_mcc_mnc">MCC+MNC (e.g., 310260)</string>
+
+    <!-- Messages -->
+    <string name="config_saved">Configuration saved and applied</string>
+    <string name="config_deleted">Configuration deleted</string>
+    <string name="logs_cleared">Logs cleared</string>
+    <string name="daemon_started">GodMode daemon started</string>
+    <string name="daemon_stopped_msg">GodMode daemon stopped</string>
+    <string name="root_required">Root access required</string>
+    <string name="installing_daemon">Installing GodMode daemon…</string>
+    <string name="no_logs">No access logs found</string>
+    <string name="log_count">%1$d entries</string>
+
+    <!-- Array for spoof mode spinner -->
+    <string-array name="spoof_modes">
+        <item>Disabled</item>
+        <item>Custom Value</item>
+        <item>Randomize</item>
+        <item>Empty/Null</item>
+    </string-array>
+</resources>
