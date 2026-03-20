@@ -89,7 +89,7 @@ bool inline_hook_install(void* target, void* replacement, void** original) {
     memcpy(tramp + 8, &ret_addr, 8);
 
     // Flush instruction cache for trampoline
-    __builtin___clear_cache(entry.trampoline, (uint8_t*)entry.trampoline + TRAMPOLINE_ALLOC_SIZE);
+    __builtin___clear_cache((char*)entry.trampoline, (char*)((uint8_t*)entry.trampoline + TRAMPOLINE_ALLOC_SIZE));
 
     if (original) {
         *original = entry.trampoline;
@@ -108,7 +108,7 @@ bool inline_hook_install(void* target, void* replacement, void** original) {
     memcpy(target, patch, TRAMPOLINE_SIZE);
 
     // Flush instruction cache
-    __builtin___clear_cache(target, (uint8_t*)target + TRAMPOLINE_SIZE);
+    __builtin___clear_cache((char*)target, (char*)((uint8_t*)target + TRAMPOLINE_SIZE));
 
     make_executable(target, TRAMPOLINE_SIZE);
 
@@ -124,7 +124,7 @@ bool inline_hook_remove(void* target) {
         if (g_hooks[i].target == target && g_hooks[i].active) {
             if (!make_writable(target, TRAMPOLINE_SIZE)) return false;
             memcpy(target, g_hooks[i].original_bytes, TRAMPOLINE_SIZE);
-            __builtin___clear_cache(target, (uint8_t*)target + TRAMPOLINE_SIZE);
+            __builtin___clear_cache((char*)target, (char*)((uint8_t*)target + TRAMPOLINE_SIZE));
             make_executable(target, TRAMPOLINE_SIZE);
             munmap(g_hooks[i].trampoline, TRAMPOLINE_ALLOC_SIZE);
             g_hooks[i].active = false;
