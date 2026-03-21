@@ -57,13 +57,8 @@ class SetupWizardActivity : AppCompatActivity() {
             launchMainApp()
         }
         
-        // Auto-start installation immediately after showing welcome screen
-        lifecycleScope.launch {
-            delay(1500) // Show welcome screen for 1.5 seconds
-            if (currentStep == 1) {
-                startInstallation()
-            }
-        }
+        // DO NOT auto-start - let user read and click
+        // Removed auto-start to give user control
     }
 
     private fun showStep(step: Int) {

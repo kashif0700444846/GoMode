@@ -46,6 +46,10 @@ class DebugFragment : Fragment() {
         binding.btnClearOutput.setOnClickListener {
             clearOutput()
         }
+        
+        binding.btnFixSelinux.setOnClickListener {
+            fixSelinux()
+        }
 
         // Auto-run on load
         runDiagnostics()
@@ -148,14 +152,30 @@ class DebugFragment : Fragment() {
         debugOutput.append("─────────────────────────────────────\n")
         try {
             val libPath = requireContext().applicationInfo.nativeLibraryDir
-            val libFiles = File(libPath).listFiles()
-            if (libFiles != null && libFiles.isNotEmpty()) {
-                debugOutput.append("✓ Native libs found in: $libPath\n")
-                libFiles.filter { it.name.contains("godmode") }.forEach {
-                    debugOutput.append("  - ${it.name} (${it.length()} bytes)\n")
+            debugOutput.append("Native lib path: $libPath\n")
+            val libDir = File(libPath)
+            if (libDir.exists()) {
+                val libFiles = libDir.listFiles()
+                if (libFiles != null && libFiles.isNotEmpty()) {
+                    debugOutput.append("✓ Native directory exists\n")
+                    val godmodeLibs = libFiles.filter { it.name.contains("godmode") }
+                    if (godmodeLibs.isNotEmpty()) {
+                        debugOutput.append("✓ GoMode libraries found:\n")
+                        godmodeLibs.forEach {
+                            debugOutput.append("  - ${it.name} (${it.length()} bytes)\n")
+                        }
+                    } else {
+                        debugOutput.append("✗ No GoMode .so files found!\n")
+                        debugOutput.append("   All files:\n")
+                        libFiles.take(5).forEach {
+                            debugOutput.append("  - ${it.name}\n")
+                        }
+                    }
+                } else {
+                    debugOutput.append("✗ Native directory empty!\n")
                 }
             } else {
-                debugOutput.append("✗ No native libraries found!\n")
+                debugOutput.append("✗ Native library directory doesn't exist!\n")
             }
         } catch (e: Exception) {
             debugOutput.append("✗ Error: ${e.message}\n")
@@ -273,6 +293,30 @@ class DebugFragment : Fragment() {
     private fun clearOutput() {
         binding.tvDebugOutput.text = "Output cleared. Tap 'Run Diagnostics' to scan again."
         debugOutput.clear()
+    }
+    
+    private fun fixSelinux() {
+        lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
+            val result = withContext(Dispatchers.IO) {
+                val rootManager = (requireActivity().application as GodModeApp).rootManager
+                try {
+                    rootManager.execRootCommand("setenforce 0")
+                } catch (e: Exception) {
+                    "Error: ${e.message}"
+                }
+            }
+            binding.progressBar.visibility = View.GONE
+            Toast.makeText(requireContext(), 
+                if (result.isEmpty() || !result.contains("Error")) 
+                    "SELinux set to Permissive. Reboot and try again!" 
+                else 
+                    "Failed: $result", 
+                Toast.LENGTH_LONG).show()
+            
+            // Re-run diagnostics
+            runDiagnostics()
+        }
     }
 
     override fun onDestroyView() {

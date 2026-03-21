@@ -89,7 +89,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="GoMode gives you complete control over your Android system:\n\n• Device Identity Spoofing\n• Network Control\n• Location Override\n• App Permission Control\n• Root Shell Terminal\n• System-level Hooks\n\nGoMode will now install its daemon and system hooks. This requires root access.\n\nSetup will start automatically in a few seconds..."
+                android:text="GoMode gives you complete control over your Android system:\n\n• Device Identity Spoofing\n• Network Control\n• Location Override\n• App Permission Control\n• Root Shell Terminal\n• System-level Hooks\n\nGoMode will now install its daemon and system hooks. This requires root access.\n\nTap 'Install Now' to begin setup."
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
                 android:lineSpacingMultiplier="1.4" />
