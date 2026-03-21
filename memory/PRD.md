@@ -47,6 +47,17 @@ Into a single user-friendly application. The app should:
 
 ## Implemented Features
 
+### v6 (2026-03-20) - P1 UX + Decoupling Foundation (Choice 4)
+- Redesigned `NetworkFragment` UI into a cleaner, professional operations layout with live snapshot, clearer grouping, and improved density/readability.
+- Added live runtime snapshot details to network screen (`tv_network_summary`) including daemon, WiFi, mobile data, and airplane status.
+- Introduced **Hook Engine** section in Modules tab (reframed from LSPosed-only UX to GoMode-runtime-first UX).
+- Added in-app runtime actions:
+  - `bootstrapGoModeRuntime()` (creates `/data/adb/modules/gomode_runtime` bootstrap module + service scripts)
+  - `restartGoModeRuntime()` (daemon restart action)
+  - `getGoModeRuntimeStatus()` (module/daemon/runtime/config/log status)
+- Added runtime status card + controls in `fragment_modules.xml` (`btn_bootstrap_runtime`, `btn_restart_runtime`, `tv_runtime_status`).
+- Updated LSPosed messaging to optional compatibility mode while decoupling phase-1 progresses.
+
 ### v5 (2026-03-20) - P0 Stability Pass (Install Hang + Spoofing + Logs)
 - Reworked root command execution to timeout-safe Kotlin process handling (prevents indefinite `su` hangs).
 - Added startup/setup timeouts in `MainActivity` and `SetupWizardActivity` to avoid getting stuck on install screens.
@@ -120,12 +131,13 @@ Into a single user-friendly application. The app should:
 - Confirm fallback config path works (`/data/local/tmp/gomode/config/*.conf`)
 
 ### P1 (Next Implementation)
-- Network traffic inspector (ProxyPin-like): intercept HTTP/HTTPS
-  - Option A: VpnService-based packet capture (no extra binaries)
-  - Option B: iptables TPROXY + mitmproxy approach
-- LSPosed scope editor: per-module per-app hook enable/disable
-- Show ALL installed apps in Apps tab (not just configured ones)
-- App icon display with logs (show which app icon alongside access log)
+- P1-A complete: professional Network/System redesign pass
+- P1-B started: LSPosed decoupling phase-1 runtime bootstrap
+- Remaining P1:
+  - LSPosed scope editor: per-module per-app hook enable/disable
+  - Show ALL installed apps in Apps tab (not just configured ones)
+  - App icon display with logs (show which app icon alongside access log)
+  - Runtime decoupling phase-2: move more hook paths from LSPosed-only dependency
 
 ### P2 (Medium Priority)
 - Magisk/KernelSU module flasher (install .zip modules directly)
