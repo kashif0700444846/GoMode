@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <unistd.h>
 #include <linux/android/binder.h>
 
 #ifdef __cplusplus
