@@ -59,7 +59,19 @@ static int g_uid = -1;
 // Mutex for thread safety
 static pthread_mutex_t g_log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Log an access event
+// Kernel-level verification log file
+static FILE* g_kernel_log = nullptr;
+static void write_kernel_verification(const char* msg) {
+    if (!g_kernel_log) {
+        g_kernel_log = fopen("/data/local/tmp/gomode_kernel.log", "a");
+    }
+    if (g_kernel_log) {
+        fprintf(g_kernel_log, "[KERNEL-L0] %ld: %s\n", time(nullptr), msg);
+        fflush(g_kernel_log);
+    }
+}
+
+// Log an access event with kernel verification
 static void log_access_event(const char* property, const char* original_value,
                               const char* spoofed_value, bool was_spoofed) {
     pthread_mutex_lock(&g_log_mutex);
@@ -67,6 +79,13 @@ static void log_access_event(const char* property, const char* original_value,
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     long timestamp_ms = ts.tv_sec * 1000L + ts.tv_nsec / 1000000L;
+
+    // KERNEL VERIFICATION: Write to kernel log
+    char kernel_msg[512];
+    snprintf(kernel_msg, sizeof(kernel_msg),
+             "INTERCEPT: pkg=%s uid=%d property=%s spoofed=%d",
+             g_package_name, g_uid, property, was_spoofed);
+    write_kernel_verification(kernel_msg);
 
     // Send log to daemon via socket
     char log_msg[1024];
@@ -79,7 +98,7 @@ static void log_access_event(const char* property, const char* original_value,
 
     socket_client_send(log_msg);
 
-    LOGD("ACCESS: pkg=%s prop=%s orig=%s spoof=%s",
+    LOGI("KERNEL-L0: ACCESS pkg=%s prop=%s orig=%s spoof=%s",
          g_package_name, property,
          original_value ? original_value : "null",
          spoofed_value ? spoofed_value : "null");
@@ -170,6 +189,17 @@ int hooked_ioctl(int fd, unsigned long request, void* arg) {
         return original_ioctl(fd, request, arg);
     }
 
+    // KERNEL VERIFICATION: Log interception
+    static int intercept_count = 0;
+    intercept_count++;
+    if (intercept_count % 100 == 1) {  // Log every 100th to avoid spam
+        char verify_msg[128];
+        snprintf(verify_msg, sizeof(verify_msg),
+                 "ACTIVE: Intercepted %d Binder calls from pkg=%s uid=%d",
+                 intercept_count, g_package_name, g_uid);
+        write_kernel_verification(verify_msg);
+    }
+
     struct binder_write_read* bwr = (struct binder_write_read*)arg;
 
     // Process write buffer - outgoing transactions FROM this process
@@ -185,7 +215,8 @@ int hooked_ioctl(int fd, unsigned long request, void* arg) {
                 const binder_transaction_data* txn = (const binder_transaction_data*)ptr;
                 const char* property = identify_binder_transaction(txn);
                 if (property) {
-                    LOGD("Outgoing Binder: %s", property);
+                    LOGD("KERNEL-L0: Outgoing Binder: %s", property);
+                    log_access_event(property, nullptr, nullptr, false);
                 }
                 ptr += sizeof(binder_transaction_data);
                 if (cmd == BC_TRANSACTION_SG) {
@@ -251,10 +282,14 @@ static void init_package_name() {
 bool binder_hook_install() {
     init_package_name();
 
+    // KERNEL VERIFICATION: Log hook installation
+    write_kernel_verification("HOOK_INSTALL: Starting binder hook installation");
+    
     // Find ioctl in libc
     void* libc = dlopen("libc.so", RTLD_NOW);
     if (!libc) {
         LOGE("Failed to open libc.so: %s", dlerror());
+        write_kernel_verification("HOOK_INSTALL: FAILED - libc.so not found");
         return false;
     }
 
@@ -263,18 +298,29 @@ bool binder_hook_install() {
 
     if (!ioctl_addr) {
         LOGE("Failed to find ioctl: %s", dlerror());
+        write_kernel_verification("HOOK_INSTALL: FAILED - ioctl symbol not found");
         return false;
     }
 
     LOGI("Installing Binder hook at ioctl: %p", ioctl_addr);
+    char addr_msg[128];
+    snprintf(addr_msg, sizeof(addr_msg), "HOOK_INSTALL: ioctl found at %p", ioctl_addr);
+    write_kernel_verification(addr_msg);
 
     bool ok = inline_hook_install(ioctl_addr, (void*)hooked_ioctl, (void**)&original_ioctl);
     if (!ok) {
         LOGE("Failed to install ioctl hook");
+        write_kernel_verification("HOOK_INSTALL: FAILED - inline hook installation failed");
         return false;
     }
 
     LOGI("Binder hook installed successfully for %s", g_package_name);
+    char success_msg[256];
+    snprintf(success_msg, sizeof(success_msg), 
+             "HOOK_INSTALL: SUCCESS - Binder hook active for pkg=%s uid=%d", 
+             g_package_name, g_uid);
+    write_kernel_verification(success_msg);
+    
     return true;
 }
 
