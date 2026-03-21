@@ -51,6 +51,19 @@ class SetupWizardActivity : AppCompatActivity() {
         binding.btnSkipReboot.setOnClickListener {
             launchMainApp()
         }
+        
+        binding.btnSkipSetup.setOnClickListener {
+            markSetupDone()
+            launchMainApp()
+        }
+        
+        // Auto-start installation after a brief delay to show welcome screen
+        lifecycleScope.launch {
+            delay(2000) // Show welcome screen for 2 seconds
+            if (currentStep == 1) {
+                startInstallation()
+            }
+        }
     }
 
     private fun showStep(step: Int) {

@@ -85,37 +85,72 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
-        val permissions = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            listOf(
-                android.Manifest.permission.POST_NOTIFICATIONS,
-                android.Manifest.permission.READ_MEDIA_IMAGES,
-                android.Manifest.permission.READ_MEDIA_VIDEO,
-                android.Manifest.permission.READ_MEDIA_AUDIO
-            ).forEach { perm ->
-                if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                    permissions.add(perm)
+        // With root access, we can grant permissions programmatically
+        val rootManager = (application as GodModeApp).rootManager
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                if (rootManager.requestRoot()) {
+                    // Grant dangerous permissions via root
+                    val packageName = packageName
+                    val permissions = listOf(
+                        android.Manifest.permission.CAMERA,
+                        android.Manifest.permission.RECORD_AUDIO,
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.READ_PHONE_STATE,
+                        android.Manifest.permission.READ_CONTACTS,
+                        android.Manifest.permission.READ_CALL_LOG,
+                        android.Manifest.permission.READ_SMS,
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                    )
+                    
+                    permissions.forEach { perm ->
+                        try {
+                            rootManager.execRootCommand("pm grant $packageName $perm")
+                        } catch (e: Throwable) {
+                            // Permission might already be granted or not applicable
+                        }
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Permissions auto-granted via root", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+            } catch (e: Throwable) {
+                Log.d(TAG, "Root permission grant failed: ${e.message}")
+            }
+            
+            // Fallback: Request permissions normally if root is not available
+            withContext(Dispatchers.Main) {
+                val permissions = mutableListOf<String>()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    listOf(
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                        android.Manifest.permission.READ_MEDIA_IMAGES,
+                        android.Manifest.permission.READ_MEDIA_VIDEO,
+                        android.Manifest.permission.READ_MEDIA_AUDIO
+                    ).forEach { perm ->
+                        if (ContextCompat.checkSelfPermission(this@MainActivity, perm) != PackageManager.PERMISSION_GRANTED) {
+                            permissions.add(perm)
+                        }
+                    }
+                }
+                listOf(
+                    android.Manifest.permission.CAMERA,
+                    android.Manifest.permission.RECORD_AUDIO,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.READ_PHONE_STATE,
+                    android.Manifest.permission.READ_CONTACTS,
+                    android.Manifest.permission.READ_CALL_LOG,
+                    android.Manifest.permission.READ_SMS
+                ).forEach { perm ->
+                    if (ContextCompat.checkSelfPermission(this@MainActivity, perm) != PackageManager.PERMISSION_GRANTED) {
+                        permissions.add(perm)
+                    }
+                }
+                if (permissions.isNotEmpty()) {
+                    requestPermissionLauncher.launch(permissions.toTypedArray())
                 }
             }
-        }
-        listOf(
-            android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.READ_PHONE_STATE,
-            android.Manifest.permission.READ_CONTACTS,
-            android.Manifest.permission.READ_CALL_LOG,
-            android.Manifest.permission.READ_SMS,
-            android.Manifest.permission.ACTIVITY_RECOGNITION,
-            android.Manifest.permission.BLUETOOTH_CONNECT,
-            android.Manifest.permission.BODY_SENSORS
-        ).forEach { perm ->
-            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                permissions.add(perm)
-            }
-        }
-        if (permissions.isNotEmpty()) {
-            requestPermissionLauncher.launch(permissions.toTypedArray())
         }
     }
 
