@@ -89,15 +89,15 @@ class AppAccessDetailActivity : AppCompatActivity() {
         val database = (application as GodModeApp).database
         val accessLogDao = database.accessLogDao()
 
-        val logs = accessLogDao.getLogsForPackage(packageName)
-        val grouped = logs.groupBy { it.property }
+        val logs = accessLogDao.getLogsForPackageSync(packageName)
+        val grouped = logs.groupBy { it.propertyType }
 
         return grouped.map { (dataType, logs) ->
             DataAccessDetail(
                 dataType = dataType,
                 count = logs.size,
                 lastAccessTime = logs.maxOf { it.timestamp },
-                wasBlocked = logs.any { it.spoofedValue.isNotEmpty() }
+                wasBlocked = logs.any { it.wasSpoofed }
             )
         }.sortedByDescending { it.lastAccessTime }
     }

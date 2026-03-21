@@ -108,6 +108,13 @@
             android:name=".ui.setup.SetupWizardActivity"
             android:exported="false"
             android:theme="@style/Theme.GodMode" />
+            
+        <!-- App Access Detail Activity -->
+        <activity
+            android:name=".ui.tracking.AppAccessDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.GodMode"
+            android:parentActivityName=".ui.MainActivity" />
 
         <!-- App Detail Activity -->
         <activity

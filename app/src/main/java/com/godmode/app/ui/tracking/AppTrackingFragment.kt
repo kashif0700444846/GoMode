@@ -124,7 +124,7 @@ class AppTrackingFragment : Fragment() {
                 appName = appName,
                 totalAccesses = logs.size,
                 lastAccessTime = logs.maxOf { it.timestamp },
-                dataTypes = logs.map { it.property }.distinct()
+                dataTypes = logs.map { it.propertyType }.distinct()
             )
         }.sortedByDescending { it.lastAccessTime }
     }

@@ -12,6 +12,12 @@ interface AccessLogDao {
 
     @Query("SELECT * FROM access_logs WHERE packageName = :packageName ORDER BY timestamp DESC LIMIT :limit")
     fun getLogsForPackage(packageName: String, limit: Int = 200): Flow<List<AccessLog>>
+    
+    @Query("SELECT * FROM access_logs WHERE packageName = :packageName ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getLogsForPackageSync(packageName: String, limit: Int = 200): List<AccessLog>
+    
+    @Query("SELECT * FROM access_logs ORDER BY timestamp DESC")
+    suspend fun getAllLogs(): List<AccessLog>
 
     @Query("SELECT * FROM access_logs WHERE propertyType = :type ORDER BY timestamp DESC LIMIT :limit")
     fun getLogsByType(type: String, limit: Int = 200): Flow<List<AccessLog>>
