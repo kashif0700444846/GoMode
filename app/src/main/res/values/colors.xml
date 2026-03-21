@@ -19,4 +19,11 @@
     <color name="purple_special">#8B5CF6</color>
     <color name="status_bar">#050C15</color>
     <color name="nav_background">#080F1A</color>
+    
+    <!-- Missing required colors -->
+    <color name="chip_bg">#162030</color>
+    <color name="primary">#00D4AA</color>
+    <color name="primary_dark">#003D30</color>
+    <color name="primary_variant">#00B894</color>
+    <color name="accent_light">#5EDDC8</color>
 </resources>
