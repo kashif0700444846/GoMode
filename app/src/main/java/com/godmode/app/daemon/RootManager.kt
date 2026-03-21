@@ -94,15 +94,18 @@ class RootManager private constructor(private val context: Context) {
     )
 
     /**
-     * Execute a root command with fallback to pure Kotlin implementation.
-     * This is the safe wrapper to use throughout the app.
+     * Execute a root command safely.
+     * IMPORTANT: nativeExecRoot wraps in single quotes (su -c '...') which breaks
+     * commands containing single quotes. Route all complex commands to Kotlin fallback.
      */
     fun execRootCommand(command: String): String {
-        if (nativeLibLoaded) {
-            try {
-                return nativeExecRoot(command)
-            } catch (e: Throwable) {
-                Log.w(TAG, "Native exec failed, using Kotlin fallback: ${e.message}")
+        // Only use native for simple commands without shell operators or single quotes
+        val isSimple = !command.contains("'") && !command.contains("|") &&
+                !command.contains("&&") && !command.contains(">") &&
+                !command.contains(";") && !command.contains("$")
+        if (nativeLibLoaded && isSimple) {
+            try { return nativeExecRoot(command) } catch (e: Throwable) {
+                Log.w(TAG, "Native exec failed: ${e.message}")
             }
         }
         return execRootCommandKotlin(command)
@@ -110,11 +113,14 @@ class RootManager private constructor(private val context: Context) {
 
     private fun execRootCommandKotlin(command: String): String {
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+            // Array form passes command directly to su without additional quoting
+            // su receives "command" as a single argument and passes it to sh -c
+            val process = ProcessBuilder("su", "-c", command)
+                .redirectErrorStream(true)
+                .start()
             val output = process.inputStream.bufferedReader().readText()
-            val error = process.errorStream.bufferedReader().readText()
             process.waitFor(15, TimeUnit.SECONDS)
-            (output + error).trim()
+            output.trim()
         } catch (e: Throwable) {
             Log.e(TAG, "Kotlin root exec failed: ${e.message}")
             "Error: ${e.message}"

@@ -1,37 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary palette -->
-    <color name="primary">#0F0F1A</color>
-    <color name="primary_dark">#080810</color>
-    <color name="primary_variant">#1A1A2E</color>
-
-    <!-- Accent / highlight -->
-    <color name="accent">#E94560</color>
-    <color name="accent_light">#FF6B81</color>
-
-    <!-- Backgrounds -->
-    <color name="bg_dark">#0A0A14</color>
-    <color name="bg_card">#12121E</color>
-    <color name="bg_card_elevated">#1C1C2E</color>
-    <color name="nav_bg">#0D0D1A</color>
-    <color name="chip_bg">#1A1A2E</color>
-
-    <!-- Text -->
-    <color name="text_primary">#E8E8F0</color>
-    <color name="text_secondary">#A0A0C0</color>
-    <color name="text_hint">#606080</color>
-
-    <!-- Status colors -->
-    <color name="green_success">#00E676</color>
-    <color name="orange_warning">#FF9100</color>
-    <color name="red_danger">#FF1744</color>
-    <color name="blue_info">#40C4FF</color>
-
-    <!-- Log row backgrounds -->
-    <color name="log_normal_bg">#0D0D1A</color>
-    <color name="log_spoofed_bg">#0A1A0A</color>
-    <color name="log_sensitive_bg">#1A0A0A</color>
-
-    <!-- Divider -->
-    <color name="divider">#1E1E30</color>
+    <!-- GoMode Dark Professional Theme — GitHub-inspired dark navy + teal accent -->
+    <color name="bg_dark">#050C15</color>
+    <color name="bg_card">#0D1520</color>
+    <color name="bg_card_elevated">#162030</color>
+    <color name="accent">#00D4AA</color>
+    <color name="accent_dim">#003D30</color>
+    <color name="accent_secondary">#0EA5E9</color>
+    <color name="text_primary">#E2E8F0</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_hint">#4B5563</color>
+    <color name="divider">#1A2535</color>
+    <color name="green_success">#22C55E</color>
+    <color name="green_success_dim">#14532D</color>
+    <color name="orange_warning">#F59E0B</color>
+    <color name="red_danger">#EF4444</color>
+    <color name="blue_info">#3B82F6</color>
+    <color name="purple_special">#8B5CF6</color>
+    <color name="status_bar">#050C15</color>
+    <color name="nav_background">#080F1A</color>
 </resources>
