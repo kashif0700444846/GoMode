@@ -562,13 +562,29 @@ class RootManager private constructor(private val context: Context) {
     }
 
     private fun tryInstallToSystem(hookLibFile: File): Boolean {
+        // Skip /system installation on Android 14+ (dm-verity/AVB protection)
+        if (Build.VERSION.SDK_INT >= 34) {
+            Log.i(TAG, "Android 14+: Skipping /system installation (verified boot active)")
+            return false
+        }
+        
         return try {
             val cmd = "mount -o rw,remount /system 2>/dev/null; " +
                     "cp '${hookLibFile.absolutePath}' '$HOOK_LIB_SYSTEM_PATH' && " +
                     "chmod 644 '$HOOK_LIB_SYSTEM_PATH' && " +
                     "chown root:root '$HOOK_LIB_SYSTEM_PATH' && echo SUCCESS"
-            execRootCommand(cmd).contains("SUCCESS")
-        } catch (e: Throwable) { false }
+            val result = execRootCommand(cmd)
+            if (result.contains("SUCCESS")) {
+                Log.i(TAG, "Successfully installed hook lib to /system")
+                true
+            } else {
+                Log.w(TAG, "Failed to install to /system (normal on modern Android)")
+                false
+            }
+        } catch (e: Throwable) {
+            Log.w(TAG, "Cannot install to /system: ${e.message}")
+            false
+        }
     }
 
     private fun setupBootPersistence() {

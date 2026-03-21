@@ -46,6 +46,9 @@ android {
             version "3.22.1"
         }
     }
+    
+    // Ensure native build runs
+    ndkVersion "26.1.10909125"
 
     buildFeatures {
         viewBinding true

@@ -19,11 +19,22 @@ jobs:
       - name: Install NDK
         run: echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" "cmake;3.22.1"
 
+      - name: Verify NDK Installation
+        run: |
+          echo "NDK Path: ${ANDROID_HOME}/ndk/26.1.10909125"
+          ls -la ${ANDROID_HOME}/ndk/ || echo "NDK directory not found"
+          ls -la ${ANDROID_HOME}/cmake/ || echo "CMake directory not found"
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      - name: Build with Gradle (with native libs)
+        run: |
+          ./gradlew assembleDebug --info --stacktrace
+          echo "=== Checking for native libraries ==="
+          find app/build -name "*.so" -type f
+          ls -la app/build/intermediates/cmake/ || echo "No cmake intermediates"
+          ls -la app/build/intermediates/merged_native_libs/ || echo "No merged native libs"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
