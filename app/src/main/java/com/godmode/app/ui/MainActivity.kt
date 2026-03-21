@@ -51,7 +51,8 @@ class MainActivity : AppCompatActivity() {
         // Check if first-time setup is needed
         val prefs = getSharedPreferences("gomode_prefs", MODE_PRIVATE)
         if (!prefs.getBoolean("setup_complete", false)) {
-            startActivity(Intent(this, SetupWizardActivity::class.java))
+            // Start with root detection screen
+            startActivity(Intent(this, com.godmode.app.ui.setup.RootDetectionActivity::class.java))
             finish()
             return
         }

@@ -82,10 +82,8 @@
         android:hardwareAccelerated="true"
         tools:targetApi="31">
 
-        <!-- Xposed Module metadata -->
-        <meta-data android:name="xposedmodule" android:value="true" />
-        <meta-data android:name="xposeddescription" android:value="GoMode Privacy Protection - Spoof hardware IDs for any app" />
-        <meta-data android:name="xposedminversion" android:value="82" />
+        <!-- Xposed Module metadata - REMOVED: Using kernel-level hooks only -->
+        <!-- GoMode works via native kernel hooks, not LSPosed/Xposed -->
 
         <!-- Main Activity -->
         <activity
@@ -98,6 +96,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Root Detection Activity -->
+        <activity
+            android:name=".ui.setup.RootDetectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.GodMode" />
 
         <!-- Setup Wizard Activity -->
         <activity
