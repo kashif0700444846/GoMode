@@ -142,7 +142,7 @@
                 android:id="@+id/tab_lsposed"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:text="LSPosed"
+                android:text="Hook Engine"
                 android:textColor="@color/text_hint"
                 android:textSize="13sp"
                 android:gravity="center"
@@ -230,6 +230,65 @@
                 android:orientation="vertical"
                 android:padding="12dp"
                 android:visibility="gone">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/GodMode.CardView"
+                    android:layout_marginBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="GOMODE RUNTIME (BETA)"
+                            android:textColor="@color/text_hint"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.1"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:id="@+id/tv_runtime_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:fontFamily="monospace"
+                            android:lineSpacingMultiplier="1.4"
+                            android:text="Loading runtime status..."
+                            android:layout_marginBottom="10dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btn_bootstrap_runtime"
+                                android:layout_width="0dp"
+                                android:layout_height="36dp"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="6dp"
+                                android:text="Bootstrap Runtime"
+                                android:textSize="11sp"
+                                style="@style/GodMode.Button" />
+
+                            <Button
+                                android:id="@+id/btn_restart_runtime"
+                                android:layout_width="0dp"
+                                android:layout_height="36dp"
+                                android:layout_weight="1"
+                                android:text="Restart Daemon"
+                                android:textSize="11sp"
+                                style="@style/GodMode.Button.Outlined" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <TextView
                     android:id="@+id/tv_lsposed_info"

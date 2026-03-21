@@ -137,6 +137,26 @@ class NetworkFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             binding.progressNetwork.visibility = View.VISIBLE
 
+            val wifiState = withContext(Dispatchers.IO) {
+                rm.execRootCommand("dumpsys wifi 2>/dev/null | grep -E 'Wi-Fi is|wifiState' | head -1").trim()
+            }
+
+            val dataState = withContext(Dispatchers.IO) {
+                rm.execRootCommand("settings get global mobile_data 2>/dev/null").trim()
+            }
+
+            val airplaneState = withContext(Dispatchers.IO) {
+                rm.execRootCommand("settings get global airplane_mode_on 2>/dev/null").trim()
+            }
+
+            val daemonState = withContext(Dispatchers.IO) {
+                try {
+                    if (rm.getRootStatus().isDaemonRunning) "Running" else "Stopped"
+                } catch (_: Throwable) {
+                    "Unknown"
+                }
+            }
+
             val wifiInfo = withContext(Dispatchers.IO) {
                 rm.execRootCommand("dumpsys wifi 2>/dev/null | grep -E 'SSID|signalLevel|mNetworkInfo|wifiState|ip' | head -12").trim()
             }
@@ -151,6 +171,13 @@ class NetworkFragment : Fragment() {
 
             val dnsInfo = withContext(Dispatchers.IO) {
                 rm.execRootCommand("getprop net.dns1; getprop net.dns2; getprop net.wlan0.dns1 2>/dev/null").trim()
+            }
+
+            binding.tvNetworkSummary.text = buildString {
+                appendLine("Daemon: $daemonState")
+                appendLine("WiFi: ${wifiState.ifEmpty { "Unknown" }}")
+                appendLine("Mobile data: ${if (dataState == "1") "Enabled" else if (dataState == "0") "Disabled" else "Unknown"}")
+                append("Airplane mode: ${if (airplaneState == "1") "Enabled" else if (airplaneState == "0") "Disabled" else "Unknown"}")
             }
 
             binding.tvWifiDetails.text = buildString {

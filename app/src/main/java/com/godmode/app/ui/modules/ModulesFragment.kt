@@ -54,6 +54,34 @@ class ModulesFragment : Fragment() {
         binding.tabZygisk.setOnClickListener { selectTab(TAB_ZYGISK) }
         binding.tabXplex.setOnClickListener { selectTab(TAB_XPLEX) }
         binding.btnRefreshModules.setOnClickListener { loadCurrentTab() }
+
+        binding.btnBootstrapRuntime.setOnClickListener {
+            val rootManager = (requireActivity().application as GodModeApp).rootManager
+            viewLifecycleOwner.lifecycleScope.launch {
+                showLoading(true)
+                val result = withContext(Dispatchers.IO) { rootManager.bootstrapGoModeRuntime() }
+                showLoading(false)
+                Toast.makeText(
+                    requireContext(),
+                    if (result.success) result.message else "Runtime setup failed: ${result.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+                loadLSPosedTab()
+            }
+        }
+
+        binding.btnRestartRuntime.setOnClickListener {
+            val rootManager = (requireActivity().application as GodModeApp).rootManager
+            viewLifecycleOwner.lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) { rootManager.restartGoModeRuntime() }
+                Toast.makeText(
+                    requireContext(),
+                    if (ok) "GoMode daemon restarted" else "Failed to restart daemon",
+                    Toast.LENGTH_SHORT
+                ).show()
+                loadLSPosedTab()
+            }
+        }
     }
 
     private fun selectTab(tab: Int) {
@@ -139,23 +167,38 @@ class ModulesFragment : Fragment() {
         binding.contentZygisk.visibility = View.GONE
         binding.contentXplex.visibility = View.GONE
 
-        binding.tvTabTitle.text = "Xposed Modules"
-        binding.tvTabSubtitle.text = "LSPosed framework & Xposed module hooks"
+        binding.tvTabTitle.text = "Hook Engine"
+        binding.tvTabSubtitle.text = "GoMode runtime first, LSPosed compatibility optional"
 
         showLoading(true)
         viewLifecycleOwner.lifecycleScope.launch {
             val rootManager = (requireActivity().application as GodModeApp).rootManager
             val status = rootManager.getRootStatus()
+            val runtime = withContext(Dispatchers.IO) { rootManager.getGoModeRuntimeStatus() }
             showLoading(false)
 
+            binding.tvRuntimeStatus.text = buildString {
+                appendLine("Runtime status: ${runtime.message}")
+                appendLine("Module: ${if (runtime.modulePresent) "Installed" else "Not installed"}")
+                appendLine("Enabled: ${if (runtime.moduleEnabled) "Yes" else "No"}")
+                appendLine("Daemon: ${if (runtime.daemonRunning) "Running" else "Stopped"}")
+                appendLine("Runtime dirs: ${if (runtime.runtimeDirReady) "Ready" else "Missing"}")
+                appendLine("Scoped configs: ${runtime.configCount}")
+                append("Captured logs: ${runtime.logCount}")
+            }
+
+            binding.btnBootstrapRuntime.text = if (runtime.modulePresent) {
+                "Reinstall Runtime"
+            } else {
+                "Bootstrap Runtime"
+            }
+
             if (!status.hasLSPosed) {
-                binding.tvLsposedInfo.text = "LSPosed is not installed on this device.\n\n" +
-                        "To install LSPosed:\n" +
-                        "1. Install Magisk or KernelSU\n" +
-                        "2. Enable Zygisk in Magisk settings\n" +
-                        "3. Flash the LSPosed Zygisk module\n" +
-                        "4. Reboot your device"
-                binding.tvLsposedInfo.setTextColor(requireContext().getColor(R.color.orange_warning))
+                binding.tvLsposedInfo.text = "Compatibility mode: LSPosed not detected.\n\n" +
+                        "GoMode runtime can still run daemon + config/log pipeline without LSPosed.\n" +
+                        "For deepest Java API hooks (per-process interception), LSPosed remains optional compatibility.\n\n" +
+                        "Phase-1 decoupling is now active: bootstrap the runtime above, reboot once, then test spoof/log behavior."
+                binding.tvLsposedInfo.setTextColor(requireContext().getColor(R.color.text_secondary))
             } else {
                 val ver = withContext(Dispatchers.IO) { rootManager.getLSPosedVersion() }
                 val modules = withContext(Dispatchers.IO) { rootManager.getInstalledModules() }
@@ -163,10 +206,10 @@ class ModulesFragment : Fragment() {
                             it.description.lowercase().contains("xposed") ||
                             it.id.lowercase().contains("lsposed") }
 
-                binding.tvLsposedInfo.text = "LSPosed ${ver.ifEmpty { "Installed" }}\n\n" +
-                        "Xposed framework is active. Modules using Xposed hooks\n" +
-                        "will appear in the module list with scope control.\n\n" +
-                        "Detected Xposed modules: ${modules.size}"
+                binding.tvLsposedInfo.text = "Compatibility mode: LSPosed ${ver.ifEmpty { "Installed" }}\n\n" +
+                        "GoMode runtime + LSPosed can run together.\n" +
+                        "Runtime handles daemon/bootstrap flow, while LSPosed currently strengthens app-process Java hooks.\n\n" +
+                        "Detected LSPosed/Xposed modules: ${modules.size}"
                 binding.tvLsposedInfo.setTextColor(requireContext().getColor(R.color.text_secondary))
             }
 

@@ -86,6 +86,16 @@ class RootManager private constructor(private val context: Context) {
         val type: String = "magisk"
     )
 
+    data class GoModeRuntimeStatus(
+        val modulePresent: Boolean,
+        val moduleEnabled: Boolean,
+        val daemonRunning: Boolean,
+        val runtimeDirReady: Boolean,
+        val configCount: Int,
+        val logCount: Int,
+        val message: String
+    )
+
     data class SuperuserApp(
         val packageName: String,
         val uid: String,
@@ -368,6 +378,123 @@ class RootManager private constructor(private val context: Context) {
         } catch (e: Throwable) {
             Log.e(TAG, "Failed to stop daemon", e)
             false
+        }
+    }
+
+    suspend fun bootstrapGoModeRuntime(): InstallResult = withContext(Dispatchers.IO) {
+        try {
+            val moduleDir = "/data/adb/modules/gomode_runtime"
+            val moduleProp = "id=gomode_runtime\\n" +
+                    "name=GoMode Runtime\\n" +
+                    "version=0.1.0\\n" +
+                    "versionCode=1\\n" +
+                    "author=GoMode\\n" +
+                    "description=In-app runtime for GoMode daemon and hook bootstrap\\n"
+
+            val postFs = "#!/system/bin/sh\\n" +
+                    "mkdir -p /data/local/tmp/gomode/runtime /data/local/tmp/gomode/config /data/local/tmp/gomode/logs\\n" +
+                    "touch /data/local/tmp/gomode/logs/access.jsonl\\n" +
+                    "chmod 755 /data/local/tmp/gomode /data/local/tmp/gomode/runtime /data/local/tmp/gomode/config /data/local/tmp/gomode/logs\\n" +
+                    "chmod 666 /data/local/tmp/gomode/logs/access.jsonl\\n"
+
+            val serviceScript = "#!/system/bin/sh\\n" +
+                    "if [ -x /data/local/tmp/godmoded ]; then\\n" +
+                    "  nohup /data/local/tmp/godmoded >/data/local/tmp/gomode/runtime/daemon.out 2>&1 &\\n" +
+                    "fi\\n"
+
+            execRootCommand("mkdir -p '$moduleDir'", 10)
+            execRootCommand("printf '$moduleProp' > '$moduleDir/module.prop'", 10)
+            execRootCommand("printf '$postFs' > '$moduleDir/post-fs-data.sh'", 10)
+            execRootCommand("printf '$serviceScript' > '$moduleDir/service.sh'", 10)
+            execRootCommand("chmod 755 '$moduleDir/post-fs-data.sh' '$moduleDir/service.sh'", 10)
+
+            val localDaemon = File(context.filesDir, DAEMON_NAME)
+            if (localDaemon.exists()) {
+                execRootCommand(
+                    "cp '${localDaemon.absolutePath}' '$DAEMON_DATA_PATH' && chmod 755 '$DAEMON_DATA_PATH'",
+                    12
+                )
+            }
+
+            execRootCommand("mkdir -p /data/local/tmp/gomode/runtime /data/local/tmp/gomode/config /data/local/tmp/gomode/logs", 10)
+            execRootCommand("touch /data/local/tmp/gomode/logs/access.jsonl && chmod 666 /data/local/tmp/gomode/logs/access.jsonl", 10)
+
+            val moduleReady = execRootCommand("test -f '$moduleDir/module.prop' && echo READY || echo MISSING", 6)
+            if (!moduleReady.contains("READY")) {
+                return@withContext InstallResult(false, "GoMode runtime module bootstrap failed")
+            }
+
+            InstallResult(true, "GoMode runtime prepared. Reboot to activate boot scripts.")
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to bootstrap GoMode runtime", e)
+            InstallResult(false, "Runtime bootstrap failed: ${e.message}")
+        }
+    }
+
+    suspend fun restartGoModeRuntime(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            execRootCommand("pkill -f godmoded 2>/dev/null", 8)
+            Thread.sleep(350)
+            startDaemon()
+        } catch (e: Throwable) {
+            false
+        }
+    }
+
+    suspend fun getGoModeRuntimeStatus(): GoModeRuntimeStatus = withContext(Dispatchers.IO) {
+        try {
+            val modulePresent = execRootCommand(
+                "test -d /data/adb/modules/gomode_runtime && echo YES || echo NO",
+                6
+            ).contains("YES")
+
+            val moduleEnabled = execRootCommand(
+                "test -d /data/adb/modules/gomode_runtime && test ! -f /data/adb/modules/gomode_runtime/disable && echo YES || echo NO",
+                6
+            ).contains("YES")
+
+            val runtimeDirReady = execRootCommand(
+                "test -d /data/local/tmp/gomode/runtime && test -d /data/local/tmp/gomode/config && test -d /data/local/tmp/gomode/logs && echo YES || echo NO",
+                6
+            ).contains("YES")
+
+            val configCount = execRootCommand("ls -1 /data/local/tmp/gomode/config 2>/dev/null | wc -l", 6)
+                .trim().toIntOrNull() ?: 0
+
+            val logCount = execRootCommand(
+                "wc -l /data/local/tmp/gomode/logs/access.jsonl 2>/dev/null | awk '{print \$1}'",
+                6
+            ).trim().toIntOrNull() ?: 0
+
+            val daemonRunning = isDaemonRunningSafe()
+
+            val message = when {
+                !modulePresent -> "Runtime module not installed"
+                !moduleEnabled -> "Runtime module installed but disabled"
+                !runtimeDirReady -> "Runtime directories missing"
+                !daemonRunning -> "Runtime ready; daemon currently stopped"
+                else -> "Runtime active"
+            }
+
+            GoModeRuntimeStatus(
+                modulePresent = modulePresent,
+                moduleEnabled = moduleEnabled,
+                daemonRunning = daemonRunning,
+                runtimeDirReady = runtimeDirReady,
+                configCount = configCount,
+                logCount = logCount,
+                message = message
+            )
+        } catch (e: Throwable) {
+            GoModeRuntimeStatus(
+                modulePresent = false,
+                moduleEnabled = false,
+                daemonRunning = false,
+                runtimeDirReady = false,
+                configCount = 0,
+                logCount = 0,
+                message = "Runtime status unavailable"
+            )
         }
     }
 
