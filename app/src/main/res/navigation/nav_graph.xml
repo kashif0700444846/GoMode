@@ -41,5 +41,9 @@
     <fragment android:id="@+id/kernelVerificationFragment"
         android:name="com.godmode.app.ui.verification.KernelVerificationFragment"
         android:label="Kernel Verification" tools:layout="@layout/fragment_kernel_verification"/>
+        
+    <fragment android:id="@+id/debugFragment"
+        android:name="com.godmode.app.ui.debug.DebugFragment"
+        android:label="Debug &amp; Diagnostics" tools:layout="@layout/fragment_debug"/>
 
 </navigation>

@@ -157,6 +157,15 @@ class SettingsFragment : Fragment() {
             startActivity(Intent(requireContext(), SetupWizardActivity::class.java))
             requireActivity().finish()
         }
+        
+        // ---- Developer Tools ----
+        binding.btnDebugDiagnostics.setOnClickListener {
+            navigateToDebug()
+        }
+        
+        binding.btnKernelVerification.setOnClickListener {
+            navigateToKernelVerification()
+        }
     }
 
     private fun confirmPower(title: String, message: String, action: () -> Unit) {
@@ -204,6 +213,22 @@ class SettingsFragment : Fragment() {
             binding.tvDaemonVersion.text = if (status.daemonVersion.isNotEmpty())
                 "v${status.daemonVersion}" else "Not running"
             binding.tvDaemonRunning.text = if (status.isDaemonRunning) "Running" else "Stopped"
+        }
+    }
+    
+    private fun navigateToDebug() {
+        try {
+            findNavController().navigate(com.godmode.app.R.id.debugFragment)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Debug screen error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun navigateToKernelVerification() {
+        try {
+            findNavController().navigate(com.godmode.app.R.id.kernelVerificationFragment)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Kernel verification error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
