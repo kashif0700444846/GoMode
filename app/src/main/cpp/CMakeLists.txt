@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.22.1)
 project("godmode")
 
 # CRITICAL FIX: Output .so files directly to jniLibs folder
-# This ensures Gradle packages them into the APK
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
 
-message(STATUS "CMake output dir for libs: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-message(STATUS "CMake output dir for executables: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message(STATUS "Output dir for libs: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 # Build godmode_hook shared library
 add_library(godmode_hook SHARED
@@ -33,13 +31,12 @@ target_link_libraries(godmode_jni
     log
 )
 
-# Build godmoded executable  
+# Build godmoded executable (only with files that exist)
 add_executable(godmoded
     daemon/main.cpp
-    daemon/daemon_core.cpp
-    daemon/root_manager.cpp
     daemon/config_manager.cpp
     daemon/process_monitor.cpp
+    daemon/injector.cpp
     ipc/socket_server.cpp
     spoof/spoof_engine.cpp
     hook/binder_hook.cpp
