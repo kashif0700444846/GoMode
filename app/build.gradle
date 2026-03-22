@@ -160,20 +160,3 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-
-// Task to copy native libs to jniLibs for packaging
-tasks.register('copyNativeLibs', Copy) {
-    from("${buildDir}/intermediates/merged_native_libs/debug/out/lib") {
-        include '**/*.so'
-    }
-    into "src/main/jniLibs"
-}
-
-// Make sure native libs are copied before packaging
-tasks.whenTaskAdded { task ->
-    if (task.name == 'mergeDebugJniLibFolders') {
-        task.dependsOn 'copyNativeLibs'
-    }
-}
-
-preBuild.dependsOn 'copyNativeLibs'

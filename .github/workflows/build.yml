@@ -31,10 +31,12 @@ jobs:
       - name: Build with Gradle (with native libs)
         run: |
           ./gradlew assembleDebug --info --stacktrace
-          echo "=== Checking for native libraries ==="
-          find app/build -name "*.so" -type f
-          ls -la app/build/intermediates/cmake/ || echo "No cmake intermediates"
-          ls -la app/build/intermediates/merged_native_libs/ || echo "No merged native libs"
+          echo "=== Checking for native libraries in jniLibs ==="
+          find app/src/main/jniLibs -name "*.so" -type f || echo "No .so in jniLibs"
+          echo "=== Checking APK contents ==="
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep "\.so$" || echo "No .so in APK"
+          echo "=== Checking for godmoded in assets ==="
+          find app/src/main/assets -name "godmoded" -type f || echo "No godmoded in assets"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
